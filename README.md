@@ -33,6 +33,39 @@ cererile se salvează în `server/cereri/` (PDF + JSON) în loc să fie trimise.
 
 ---
 
+## Cum îl pui online
+
+### Link public, fără server (GitHub Pages)
+
+Pagina generează PDF-ul direct în browser, deci o găzduire statică e suficientă
+pentru tot, mai puțin trimiterea automată pe e-mail.
+
+În depozit: **Settings → Pages**, la *Source* alegi `Deploy from a branch`,
+apoi branch-ul dorit și folderul `/ (root)`. După un minut pagina e la
+`https://<utilizator>.github.io/<depozit>/`.
+
+Pe o astfel de găzduire, la trimiterea cererii pagina generează documentul și
+anunță clar că expedierea automată nu este activă, oferindu-l la descărcare.
+Nu e nevoie de nicio modificare în cod — căile sunt relative, deci funcționează
+și dintr-un subfolder.
+
+### Link public, cu trimitere pe e-mail
+
+Aici e nevoie de o găzduire care rulează Node (Render, Railway, Fly.io, un VPS).
+Se pornește `server/index.js`, cu variabilele din `.env` setate în panoul
+găzduirii. Serverul servește și pagina, deci nu ai nevoie de două găzduiri.
+
+Dacă pagina stă pe o altă adresă decât serverul, îi spui unde e endpoint-ul,
+printr-o singură linie în `<head>`:
+
+```html
+<meta name="sanitas-api" content="https://api.exemplu.ro/api/cerere">
+```
+
+În acest caz, adaugă și CORS pe server pentru domeniul paginii.
+
+---
+
 ## Structura proiectului
 
 ```
@@ -50,6 +83,9 @@ assets/
 server/
   index.js                  serverul: servește pagina + POST /api/cerere
   .env.example              configurarea SMTP
+detailing/                  fișierele care erau în depozit înainte de acest
+                            proiect (logo și poze de detailing), mutate aici
+                            ca să rămână rădăcina curată
 ```
 
 ---
