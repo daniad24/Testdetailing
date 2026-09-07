@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sanitas CAR București — Simulator Împrumut & Cerere Online</title>
+<meta name="description" content="Casa de Ajutor Reciproc Sanitas București. Simulează împrumutul cu dobândă fixă 12% pe an, completează cererea online și primești automat documentul oficial în PDF pe e-mail.">
+<meta name="theme-color" content="#EA1B23">
+<link rel="icon" href="assets/img/logo-sanitas.png">
+<link rel="stylesheet" href="assets/css/styles.css">
+</head>
+<body>
+
+<a class="skip-link" href="#simulator">Sari la simulator</a>
+
+<header class="site-header">
+  <div class="wrap header-inner">
+    <a class="brand" href="#top">
+      <img src="assets/img/logo-sanitas.png" alt="Sanitas CAR București" width="52" height="57">
+      <span class="brand-text">
+        <strong>Sanitas CAR</strong>
+        <small>Casa de Ajutor Reciproc · București</small>
+      </span>
+    </a>
+    <nav class="site-nav">
+      <a href="#simulator">Simulator</a>
+      <a href="#tabel">Rate</a>
+      <a href="#cerere">Cerere online</a>
+    </nav>
+    <a class="btn btn-ghost btn-sm header-cta" href="#simulator">Simulează acum</a>
+  </div>
+</header>
+
+<main id="top">
+
+  <!-- ================= HERO ================= -->
+  <section class="hero">
+    <div class="wrap hero-inner">
+      <div class="hero-copy">
+        <p class="eyebrow">Fond de întrajutorare pentru membri</p>
+        <h1>Împrumutul tău, calculat <em>transparent</em>, în câteva secunde.</h1>
+        <p class="lead">
+          Alege suma, glisează perioada de rambursare și vezi rata lunară pe loc.
+          Completezi cererea online, iar documentul oficial ajunge instant pe e-mailul tău
+          și la sediul Sanitas CAR.
+        </p>
+        <div class="hero-actions">
+          <a class="btn btn-primary" href="#simulator">Calculează rata</a>
+          <a class="btn btn-outline" href="#cerere">Depune cererea</a>
+        </div>
+        <ul class="hero-badges">
+          <li><span class="dot"></span> Dobândă fixă <strong>12% / an</strong></li>
+          <li><span class="dot"></span> Sume între <strong>1.000 – 5.000 lei</strong></li>
+          <li><span class="dot"></span> Perioadă <strong>1 – 24 luni</strong></li>
+        </ul>
+      </div>
+      <div class="hero-visual" aria-hidden="true">
+        <div class="hero-card">
+          <img src="assets/img/logo-sanitas.png" alt="" width="150" height="164">
+          <p class="hero-card-title">Sanitas CAR</p>
+          <p class="hero-card-sub">Sprijin financiar pentru colegii din sănătate</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 3 PAȘI ================= -->
+  <section class="steps wrap">
+    <article class="step">
+      <span class="step-num">1</span>
+      <h3>Experiență fluidă</h3>
+      <p>Alegi suma dintr-o atingere și ajustezi perioada cu un glisor. Rata se calculează live, fără reîncărcarea paginii.</p>
+    </article>
+    <article class="step">
+      <span class="step-num">2</span>
+      <h3>Formular inteligent</h3>
+      <p>Datele din cartea de identitate și contul bancar se completează ordonat. CNP-ul și IBAN-ul sunt verificate automat la tastare.</p>
+    </article>
+    <article class="step">
+      <span class="step-num">3</span>
+      <h3>PDF generat automat</h3>
+      <p>La trimitere se generează cererea oficială în format PDF și se expediază imediat către tine și către sediul CAR.</p>
+    </article>
+  </section>
+
+  <!-- ================= SIMULATOR ================= -->
+  <section id="simulator" class="simulator-section">
+    <div class="wrap">
+      <header class="section-head">
+        <h2>Simulator de împrumut</h2>
+        <p>Dobândă fixă de 12% pe an, rate lunare egale (anuitate). Fără costuri ascunse.</p>
+      </header>
+
+      <div class="sim-card">
+        <div class="sim-controls">
+          <div class="field-block">
+            <span class="field-label">Suma solicitată</span>
+            <div class="amount-grid" role="group" aria-label="Selectează suma solicitată">
+              <button type="button" class="amount-btn" data-amount="1000">1.000 <span>lei</span></button>
+              <button type="button" class="amount-btn" data-amount="2000">2.000 <span>lei</span></button>
+              <button type="button" class="amount-btn is-active" data-amount="3000" aria-pressed="true">3.000 <span>lei</span></button>
+              <button type="button" class="amount-btn" data-amount="4000">4.000 <span>lei</span></button>
+              <button type="button" class="amount-btn" data-amount="5000">5.000 <span>lei</span></button>
+            </div>
+          </div>
+
+          <div class="field-block">
+            <div class="slider-head">
+              <label class="field-label" for="months">Perioada de rambursare</label>
+              <output class="months-badge" id="monthsOut" for="months">12 luni</output>
+            </div>
+            <input type="range" id="months" name="months" min="1" max="24" step="1" value="12"
+                   aria-describedby="monthsHint">
+            <div class="slider-ticks" aria-hidden="true">
+              <button type="button" class="tick" data-months="6">6</button>
+              <button type="button" class="tick" data-months="12">12</button>
+              <button type="button" class="tick" data-months="18">18</button>
+              <button type="button" class="tick" data-months="24">24</button>
+            </div>
+            <p class="hint" id="monthsHint">Glisează pentru a alege între 1 și 24 de luni.</p>
+          </div>
+        </div>
+
+        <aside class="sim-result" aria-live="polite">
+          <p class="result-caption">Rata lunară estimată</p>
+          <p class="result-value"><span id="rateValue">266.55</span> <small>lei</small></p>
+          <dl class="result-rows">
+            <div><dt>Suma împrumutată</dt><dd id="resAmount">3.000 lei</dd></div>
+            <div><dt>Perioadă</dt><dd id="resMonths">12 luni</dd></div>
+            <div><dt>Dobândă anuală</dt><dd>Fixă 12%</dd></div>
+            <div><dt>Total de rambursat</dt><dd id="resTotal">3.198,60 lei</dd></div>
+            <div><dt>Cost total al creditului</dt><dd id="resInterest">198,60 lei</dd></div>
+          </dl>
+          <a class="btn btn-primary btn-block" href="#cerere" id="goToForm">Continuă cererea</a>
+        </aside>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= TABEL ================= -->
+  <section id="tabel" class="table-section wrap">
+    <header class="section-head">
+      <h2>Tabel de referință valorică</h2>
+      <p>Rate lunare calculate la dobânda fixă de 12% pe an.</p>
+    </header>
+    <div class="table-scroll">
+      <table class="ref-table">
+        <caption class="sr-only">Rate lunare în funcție de sumă și perioadă</caption>
+        <thead>
+          <tr>
+            <th scope="col">Suma împrumutată</th>
+            <th scope="col">Rată / 6 luni</th>
+            <th scope="col">Rată / 12 luni</th>
+            <th scope="col">Rată / 18 luni</th>
+            <th scope="col">Rată / 24 luni</th>
+            <th scope="col">Dobândă anuală</th>
+          </tr>
+        </thead>
+        <tbody id="refTableBody"><!-- generat din JS --></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ================= FORMULAR ================= -->
+  <section id="cerere" class="form-section">
+    <div class="wrap">
+      <header class="section-head">
+        <h2>Cerere de înscriere și acordare împrumut</h2>
+        <p>Completează datele exact ca în actul de identitate. La final primești cererea oficială în PDF.</p>
+      </header>
+
+      <form id="loanForm" class="loan-form" novalidate autocomplete="on">
+
+        <!-- A. Identitate -->
+        <fieldset class="form-block">
+          <legend><span class="legend-idx">A</span> Date de identificare membru</legend>
+
+          <div class="grid-2">
+            <div class="form-field span-2">
+              <label for="fullName">Nume și prenume <span class="req">*</span></label>
+              <input type="text" id="fullName" name="fullName" autocomplete="name"
+                     placeholder="Ex: Popescu Maria-Elena" minlength="3" required>
+              <p class="field-msg" data-msg-for="fullName">Se completează conform cărții de identitate.</p>
+            </div>
+
+            <div class="form-field">
+              <label for="idSeries">Seria buletinului <span class="req">*</span></label>
+              <input type="text" id="idSeries" name="idSeries" placeholder="Ex: RK"
+                     maxlength="2" inputmode="text" required>
+              <p class="field-msg" data-msg-for="idSeries">2 litere mari.</p>
+            </div>
+
+            <div class="form-field">
+              <label for="idNumber">Numărul buletinului <span class="req">*</span></label>
+              <input type="text" id="idNumber" name="idNumber" placeholder="Ex: 123456"
+                     maxlength="6" inputmode="numeric" required>
+              <p class="field-msg" data-msg-for="idNumber">6 cifre.</p>
+            </div>
+
+            <div class="form-field">
+              <label for="idExpiry">Data expirării buletinului <span class="req">*</span></label>
+              <input type="date" id="idExpiry" name="idExpiry" required>
+              <p class="field-msg" data-msg-for="idExpiry">Actele expirate nu sunt acceptate.</p>
+            </div>
+
+            <div class="form-field">
+              <label for="cnp">CNP <span class="req">*</span></label>
+              <input type="text" id="cnp" name="cnp" placeholder="13 cifre" maxlength="13"
+                     inputmode="numeric" autocomplete="off" required>
+              <p class="field-msg" data-msg-for="cnp">Exact 13 cifre, verificate matematic.</p>
+            </div>
+          </div>
+        </fieldset>
+
+        <!-- Adresa -->
+        <fieldset class="form-block">
+          <legend><span class="legend-idx">B</span> Adresă de domiciliu</legend>
+          <div class="grid-2">
+            <div class="form-field">
+              <label for="county">Județ <span class="req">*</span></label>
+              <input type="text" id="county" name="county" placeholder="Ex: București" required>
+              <p class="field-msg" data-msg-for="county"></p>
+            </div>
+            <div class="form-field">
+              <label for="city">Localitate <span class="req">*</span></label>
+              <input type="text" id="city" name="city" placeholder="Ex: Sector 3" required>
+              <p class="field-msg" data-msg-for="city"></p>
+            </div>
+            <div class="form-field">
+              <label for="street">Stradă <span class="req">*</span></label>
+              <input type="text" id="street" name="street" placeholder="Ex: Str. Mihai Bravu" required>
+              <p class="field-msg" data-msg-for="street"></p>
+            </div>
+            <div class="form-field">
+              <label for="streetNo">Număr / bloc / ap. <span class="req">*</span></label>
+              <input type="text" id="streetNo" name="streetNo" placeholder="Ex: 121, bl. A2, ap. 15" required>
+              <p class="field-msg" data-msg-for="streetNo"></p>
+            </div>
+          </div>
+        </fieldset>
+
+        <!-- Contact & bancar -->
+        <fieldset class="form-block">
+          <legend><span class="legend-idx">C</span> Contact și cont bancar</legend>
+          <div class="grid-2">
+            <div class="form-field span-2">
+              <label for="iban">Cont bancar (IBAN) <span class="req">*</span></label>
+              <input type="text" id="iban" name="iban" placeholder="RO00 XXXX 0000 0000 0000 0000"
+                     inputmode="text" autocomplete="off" required>
+              <p class="field-msg" data-msg-for="iban">24 de caractere, începe cu RO.</p>
+            </div>
+            <div class="form-field">
+              <label for="email">Adresă de e-mail <span class="req">*</span></label>
+              <input type="email" id="email" name="email" placeholder="nume@exemplu.ro"
+                     autocomplete="email" required>
+              <p class="field-msg" data-msg-for="email">Aici primești cererea în PDF.</p>
+            </div>
+            <div class="form-field">
+              <label for="phone">Număr de telefon <span class="req">*</span></label>
+              <input type="tel" id="phone" name="phone" placeholder="07XXXXXXXX" maxlength="10"
+                     inputmode="numeric" autocomplete="tel" required>
+              <p class="field-msg" data-msg-for="phone">10 cifre.</p>
+            </div>
+          </div>
+        </fieldset>
+
+        <!-- Recapitulare -->
+        <fieldset class="form-block">
+          <legend><span class="legend-idx">D</span> Termenii împrumutului solicitat</legend>
+          <div class="summary-grid" id="formSummary">
+            <div><span>Sumă solicitată</span><strong id="sumAmount">3.000 lei</strong></div>
+            <div><span>Perioadă</span><strong id="sumMonths">12 luni</strong></div>
+            <div><span>Dobândă fixă</span><strong>12% pe an</strong></div>
+            <div><span>Rată lunară</span><strong id="sumRate">266,55 lei</strong></div>
+            <div><span>Total de rambursat</span><strong id="sumTotal">3.198,60 lei</strong></div>
+          </div>
+          <p class="hint">Poți modifica suma și perioada oricând din <a href="#simulator">simulator</a>.</p>
+        </fieldset>
+
+        <div class="form-field consent">
+          <label class="check">
+            <input type="checkbox" id="gdpr" name="gdpr" required>
+            <span>
+              Sunt de acord cu prelucrarea datelor mele personale de către Sanitas CAR în scopul
+              analizării prezentei cereri, conform Regulamentului (UE) 2016/679 (GDPR) și
+              statutului Casei de Ajutor Reciproc. <span class="req">*</span>
+            </span>
+          </label>
+          <p class="field-msg" data-msg-for="gdpr"></p>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
+            Trimite cererea și generează PDF
+          </button>
+          <button type="button" class="btn btn-outline btn-lg" id="previewBtn">
+            Doar previzualizează PDF-ul
+          </button>
+        </div>
+
+        <p class="form-status" id="formStatus" role="status" aria-live="polite"></p>
+      </form>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap footer-inner">
+    <div class="footer-brand">
+      <img src="assets/img/logo-sanitas.png" alt="" width="44" height="48">
+      <div>
+        <strong>Sanitas CAR București</strong>
+        <p>Casa de Ajutor Reciproc a membrilor din sănătate</p>
+      </div>
+    </div>
+    <p class="footer-note">
+      Ratele afișate sunt estimative, calculate la dobândă fixă de 12% pe an cu rate lunare egale.
+      Acordarea împrumutului se face conform statutului CAR, după analizarea cererii.
+    </p>
+  </div>
+</footer>
+
+<!-- Modal previzualizare PDF -->
+<div class="modal" id="pdfModal" hidden>
+  <div class="modal-backdrop" data-close-modal></div>
+  <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <header class="modal-head">
+      <h3 id="modalTitle">Cererea ta, generată</h3>
+      <button type="button" class="modal-close" data-close-modal aria-label="Închide">&times;</button>
+    </header>
+    <div class="modal-body">
+      <p class="modal-msg" id="modalMsg"></p>
+      <iframe id="pdfFrame" title="Previzualizare cerere PDF"></iframe>
+      <div class="pdf-fallback" id="pdfFallback" hidden>
+        <img src="assets/img/logo-sanitas.png" alt="" width="56" height="61">
+        <p class="pdf-fallback-name" id="fallbackName">Cerere_Sanitas_CAR.pdf</p>
+        <p class="pdf-fallback-hint">
+          Documentul este pregătit. Folosește butoanele de mai jos ca să îl descarci
+          sau să îl deschizi.
+        </p>
+      </div>
+    </div>
+    <footer class="modal-foot">
+      <a class="btn btn-primary" id="downloadPdf" download>Descarcă PDF-ul</a>
+      <a class="btn btn-outline" id="openPdf" target="_blank" rel="noopener">Deschide în tab nou</a>
+    </footer>
+  </div>
+</div>
+
+<!-- jsPDF servit local: pagina funcționează și fără internet -->
+<script src="assets/vendor/jspdf.umd.min.js"></script>
+<script src="assets/js/pdf-assets.js"></script>
+<script src="assets/js/loan-math.js"></script>
+<script src="assets/js/validation.js"></script>
+<script src="assets/js/pdf-doc.js"></script>
+<script src="assets/js/app.js"></script>
+</body>
+</html>
