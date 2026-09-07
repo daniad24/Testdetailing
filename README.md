@@ -50,6 +50,9 @@ assets/
 server/
   index.js                  serverul: servește pagina + POST /api/cerere
   .env.example              configurarea SMTP
+detailing/                  fișierele care erau în depozit înainte de acest
+                            proiect (logo și poze de detailing), mutate aici
+                            ca să rămână rădăcina curată
 ```
 
 ---
