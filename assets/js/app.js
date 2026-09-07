@@ -14,7 +14,7 @@
   /* Endpoint-ul care trimite e-mailurile (vezi folderul server/).
      Poate fi suprascris cu <meta name="sanitas-api" content="https://..."> */
   var apiMeta = document.querySelector('meta[name="sanitas-api"]');
-  var API_URL = (apiMeta && apiMeta.content) || "/api/cerere";
+  var API_URL = (apiMeta && apiMeta.content) || "api/cerere";
 
   var state = { principal: 3000, months: 12 };
 
@@ -365,9 +365,16 @@
         resetFieldStates();
       })
       .catch(function (err) {
-        // Fără server (pagină deschisă local) documentul rămâne oricum disponibil.
+        if (err.noBackend) {
+          // Pagină statică: documentul e corect, doar expedierea automată lipsește.
+          openModal(pdf, "Cererea a fost generată cu numărul " + pdf.regNo + ". Pe această " +
+            "găzduire trimiterea automată pe e-mail nu este activă — descarcă documentul și " +
+            "trimite-l la sediul Sanitas CAR.");
+          setStatus("Cerere generată. Descarcă documentul: trimiterea automată nu este activă aici.", "ok");
+          return;
+        }
         openModal(pdf, "Documentul a fost generat (nr. " + pdf.regNo + "), dar trimiterea automată " +
-          "pe e-mail nu a funcționat: " + err.message + " Descarcă PDF-ul și trimite-l manual.");
+          "pe e-mail nu a funcționat: " + err.message + ". Descarcă PDF-ul și trimite-l manual.");
         setStatus("PDF generat, dar trimiterea pe e-mail a eșuat: " + err.message, "err");
       })
       .then(function () { submitBtn.disabled = false; });
@@ -385,9 +392,15 @@
     setAmount(state.principal);
   }
 
+  function noBackendError() {
+    var err = new Error("trimiterea automată pe e-mail nu este activă pe această găzduire");
+    err.noBackend = true;
+    return err;
+  }
+
   function sendToServer(data, pdf) {
     if (location.protocol === "file:") {
-      return Promise.reject(new Error("pagina este deschisă local, fără server."));
+      return Promise.reject(noBackendError());
     }
     var payload = {
       applicant: {
@@ -408,6 +421,8 @@
       body: JSON.stringify(payload)
     }).then(function (res) {
       if (!res.ok) {
+        // 404/405 = pagina e servită static, fără endpoint-ul de trimitere.
+        if (res.status === 404 || res.status === 405) throw noBackendError();
         return res.json().catch(function () { return {}; }).then(function (body) {
           throw new Error(body.error || ("serverul a răspuns cu " + res.status));
         });
