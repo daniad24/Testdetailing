@@ -4,6 +4,10 @@
    ============================================================ */
 
 :root {
+  /* Pagina are o identitate deschisa; fixam schema ca browserul sa nu
+     recoloreze singur controalele (date, range) in modul intunecat. */
+  color-scheme: light;
+
   --red: #EA1B23;
   --red-dark: #C2141B;
   --red-soft: #FDECEC;
