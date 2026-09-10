@@ -111,11 +111,13 @@
             </div>
             <input type="range" id="months" name="months" min="1" max="24" step="1" value="12"
                    aria-describedby="monthsHint">
-            <div class="slider-ticks" aria-hidden="true">
-              <button type="button" class="tick" data-months="6">6</button>
-              <button type="button" class="tick" data-months="12">12</button>
-              <button type="button" class="tick" data-months="18">18</button>
-              <button type="button" class="tick" data-months="24">24</button>
+            <!-- Poziția fiecărei etichete e calculată din JS, ca să stea exact
+                 sub luna pe care o marchează pe cursa glisorului. -->
+            <div class="slider-ticks">
+              <button type="button" class="tick" data-months="6" aria-label="Alege 6 luni">6</button>
+              <button type="button" class="tick" data-months="12" aria-label="Alege 12 luni">12</button>
+              <button type="button" class="tick" data-months="18" aria-label="Alege 18 luni">18</button>
+              <button type="button" class="tick" data-months="24" aria-label="Alege 24 de luni">24</button>
             </div>
             <p class="hint" id="monthsHint">Glisează pentru a alege între 1 și 24 de luni.</p>
           </div>
@@ -266,14 +268,32 @@
 
         <!-- Recapitulare -->
         <fieldset class="form-block">
-          <legend><span class="legend-idx">D</span> Termenii împrumutului solicitat</legend>
+          <legend><span class="legend-idx">D</span> Venit și termenii împrumutului</legend>
+
+          <div class="form-field salary-field">
+            <label for="netSalary">Salariu net lunar <span class="req">*</span></label>
+            <div class="input-with-suffix">
+              <input type="text" id="netSalary" name="netSalary" placeholder="Ex: 3500"
+                     inputmode="numeric" autocomplete="off" required>
+              <span class="input-suffix">lei</span>
+            </div>
+            <p class="field-msg" data-msg-for="netSalary">Venitul net pe care îl încasezi lunar.</p>
+          </div>
+
           <div class="summary-grid" id="formSummary">
             <div><span>Sumă solicitată</span><strong id="sumAmount">3.000 lei</strong></div>
             <div><span>Perioadă</span><strong id="sumMonths">12 luni</strong></div>
             <div><span>Dobândă fixă</span><strong>12% pe an</strong></div>
             <div><span>Rată lunară</span><strong id="sumRate">266,55 lei</strong></div>
             <div><span>Total de rambursat</span><strong id="sumTotal">3.198,60 lei</strong></div>
+            <div class="ratio-tile" id="ratioTile">
+              <span>Rata din venitul net</span>
+              <strong id="sumRatio">&mdash;</strong>
+              <div class="ratio-bar"><i id="ratioFill"></i></div>
+            </div>
           </div>
+
+          <p class="ratio-note" id="ratioNote" hidden></p>
           <p class="hint">Poți modifica suma și perioada oricând din <a href="#simulator">simulator</a>.</p>
         </fieldset>
 

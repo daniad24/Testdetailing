@@ -160,6 +160,27 @@
     return { ok: true, msg: "Număr valid.", value: v };
   }
 
+  /* ---------------- Salariu net lunar ---------------- */
+  var MIN_SALARY = 100;
+  var MAX_SALARY = 100000;
+
+  function netSalary(raw) {
+    // Acceptăm „3500”, „3.500”, „3 500” și „3500,50”.
+    var v = String(raw || "").trim().replace(/[\s.]/g, "").replace(",", ".");
+    if (!v) return { ok: false, msg: "Completează salariul net lunar." };
+    if (!/^\d+(\.\d{1,2})?$/.test(v)) {
+      return { ok: false, msg: "Introdu doar cifre (ex: 3500)." };
+    }
+    var n = Number(v);
+    if (!isFinite(n) || n < MIN_SALARY) {
+      return { ok: false, msg: "Suma pare prea mică. Introdu venitul net lunar, în lei." };
+    }
+    if (n > MAX_SALARY) {
+      return { ok: false, msg: "Suma pare prea mare. Verifică valoarea introdusă." };
+    }
+    return { ok: true, msg: "", value: Math.round(n * 100) / 100 };
+  }
+
   /* ---------------- Câmp text obligatoriu ---------------- */
   function required(raw, label, min) {
     var v = String(raw || "").trim().replace(/\s+/g, " ");
@@ -186,6 +207,7 @@
     iban: iban,
     email: email,
     phone: phone,
+    netSalary: netSalary,
     required: required,
     groupIban: groupIban,
     formatDateRo: formatDateRo

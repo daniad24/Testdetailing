@@ -158,13 +158,20 @@
     /* ================= SECȚIUNEA B ================= */
     y += 5.4;
     y = sectionTitle(doc, T, setFont, "B. TERMENII ÎMPRUMUTULUI SOLICITAT", M, y, contentW);
-    y = dataTable(doc, T, setFont, M, y, contentW, [
+    var termRows = [
       ["Suma solicitată", money(loan.principal)],
       ["Perioada de rambursare", loan.months === 1 ? "1 lună" : loan.months + " luni"],
       ["Dobândă fixă aplicată", fmt(loan.annualRatePct, 0) + "% pe an"],
       ["Rata lunară estimată", money(loan.monthlyPayment)],
       ["Total de rambursat", money(loan.totalRepayment)]
-    ], { highlightRows: [3] });
+    ];
+    if (loan.netSalary) {
+      termRows.push(["Venit net lunar declarat", money(loan.netSalary)]);
+      if (loan.debtRatio != null) {
+        termRows.push(["Rata în venitul net", fmt(loan.debtRatio, 1) + "%"]);
+      }
+    }
+    y = dataTable(doc, T, setFont, M, y, contentW, termRows, { highlightRows: [3] });
 
     /* ================= DECLARAȚII ================= */
     y += 5.4;
@@ -173,8 +180,8 @@
     y += 4.4;
     setFont("normal", 7.9, [60, 66, 78]);
     var decl = [
-      "Declar pe propria răspundere că datele înscrise în prezenta cerere sunt complete și " +
-        "conforme cu realitatea și cu actul de identitate prezentat.",
+      "Declar pe propria răspundere că datele înscrise în prezenta cerere, inclusiv venitul " +
+        "net declarat, sunt complete și conforme cu realitatea și cu actul de identitate prezentat.",
       "Mă oblig să restitui împrumutul acordat în ratele lunare stabilite, împreună cu dobânda " +
         "fixă de " + fmt(loan.annualRatePct, 0) + "% pe an, conform statutului C.A.R. Sanitas București.",
       "Îmi exprim consimțământul pentru prelucrarea datelor cu caracter personal cuprinse în " +
@@ -184,12 +191,12 @@
     decl.forEach(function (paragraph) {
       var lines = doc.splitTextToSize(T("• " + paragraph), contentW - 2);
       doc.text(lines, M + 1, y);
-      y += lines.length * 3.5 + 1.7;
+      y += lines.length * 3.5 + 1.4;
     });
 
     /* ================= SEMNĂTURĂ ================= */
     y += 4.6;
-    var boxH = 21;
+    var boxH = 19;
     var half = (contentW - 6) / 2;
 
     signatureBox(doc, T, setFont, M, y, half, boxH, "Data completării", formatDate(issuedAt));
@@ -199,14 +206,14 @@
     /* ---------- Zonă rezervată CAR ---------- */
     doc.setFillColor(SOFT[0], SOFT[1], SOFT[2]);
     doc.setDrawColor(LINE[0], LINE[1], LINE[2]);
-    doc.roundedRect(M, y, contentW, 15.5, 2, 2, "FD");
+    doc.roundedRect(M, y, contentW, 14, 2, 2, "FD");
     setFont("bold", 7.8, MUTED);
     doc.text(T("SPAȚIU REZERVAT SANITAS CAR"), M + 4, y + 5.2);
     setFont("normal", 7.8, MUTED);
     doc.text(T("Aprobat / Respins:  ...........................        Nr. hotărâre:  ...........................        " +
-      "Semnătura și ștampila:  ..........................."), M + 4, y + 11.4);
+      "Semnătura și ștampila:  ..........................."), M + 4, y + 10.6);
 
-    var contentBottom = y + 15.5;
+    var contentBottom = y + 14;
 
     /* ================= FOOTER ================= */
     var fy = PAGE.h - 14;
@@ -253,7 +260,7 @@
       setFont(isKey ? "bold" : "normal", isKey ? 9.2 : 8.7, INK);
       var valueLines = doc.splitTextToSize(value, w - labelW - padX * 2);
 
-      var rowH = Math.max(labelLines.length, valueLines.length) * lineH + 3.4;
+      var rowH = Math.max(labelLines.length, valueLines.length) * lineH + 2.7;
 
       if (index % 2 === 0) {
         doc.setFillColor(SOFT[0], SOFT[1], SOFT[2]);
@@ -267,9 +274,9 @@
       doc.line(x + labelW, y, x + labelW, y + rowH);
 
       setFont("normal", 8.4, MUTED);
-      doc.text(labelLines, x + padX, y + 3.9);
+      doc.text(labelLines, x + padX, y + 3.55);
       setFont(isKey ? "bold" : "normal", isKey ? 9.2 : 8.7, isKey ? RED : INK);
-      doc.text(valueLines, x + labelW + padX, y + 3.9);
+      doc.text(valueLines, x + labelW + padX, y + 3.55);
 
       y += rowH;
     });
@@ -282,10 +289,10 @@
     doc.setLineWidth(0.25);
     doc.roundedRect(x, y, w, h, 2, 2, "S");
     setFont("bold", 7.8, MUTED);
-    doc.text(T(label), x + 4, y + 5.4);
+    doc.text(T(label), x + 4, y + 5.2);
     if (value) {
       setFont("bold", 10, INK);
-      doc.text(T(value), x + 4, y + 12.4);
+      doc.text(T(value), x + 4, y + 11.8);
     }
     doc.setDrawColor(180, 186, 196);
     doc.line(x + 4, y + h - 6, x + w - 4, y + h - 6);

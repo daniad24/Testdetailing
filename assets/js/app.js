@@ -47,6 +47,7 @@
 
     monthsOut.textContent = LM.monthsLabel(sim.months);
     highlightTable();
+    renderDebtRatio();
   }
 
   function setAmount(value) {
@@ -70,10 +71,28 @@
     renderSimulation();
   }
 
-  /* Umple bara glisorului pe partea deja parcursă (Chrome/Safari). */
+  /**
+   * Poziția orizontală a unei valori pe cursa glisorului.
+   * Centrul butonului nu ajunge niciodată la marginile barei: pleacă de la
+   * jumătate de buton și se oprește cu jumătate de buton înainte de capăt.
+   * Aceeași formulă e folosită și pentru umplerea barei, și pentru etichete,
+   * ca eticheta „6” să stea fix sub poziția în care glisorul arată 6 luni.
+   */
+  function positionFor(months) {
+    var fraction = (months - LM.MIN_MONTHS) / (LM.MAX_MONTHS - LM.MIN_MONTHS);
+    return "calc(var(--thumb) / 2 + " + fraction.toFixed(5) + " * (100% - var(--thumb)))";
+  }
+
+  /* Umple bara pe partea deja parcursă (Chrome/Safari). */
   function updateSliderFill() {
-    var pct = (state.months - LM.MIN_MONTHS) / (LM.MAX_MONTHS - LM.MIN_MONTHS) * 100;
-    monthsInput.style.setProperty("--fill", pct.toFixed(2) + "%");
+    monthsInput.style.setProperty("--fill", positionFor(state.months));
+  }
+
+  /* Așază etichetele de sub glisor la poziția reală a lunii pe care o marchează. */
+  function placeTicks() {
+    $$(".tick").forEach(function (tick) {
+      tick.style.setProperty("--pos", positionFor(Number(tick.dataset.months)));
+    });
   }
 
   amountButtons.forEach(function (btn) {
@@ -140,7 +159,8 @@
     streetNo: function (v) { return V.required(v, "numărul", 1); },
     iban: function (v) { return V.iban(v); },
     email: function (v) { return V.email(v); },
-    phone: function (v) { return V.phone(v); }
+    phone: function (v) { return V.phone(v); },
+    netSalary: function (v) { return V.netSalary(v); }
   };
 
   var DEFAULT_HINTS = {};
@@ -189,6 +209,7 @@
   }
 
   digitsOnly($("#idNumber"), 6);
+  digitsOnly($("#netSalary"), 6);
   digitsOnly($("#cnp"), 13);
   digitsOnly($("#phone"), 10);
 
@@ -210,6 +231,42 @@
     input.addEventListener("input", function () { validateField(name, false); });
     input.addEventListener("blur", function () { validateField(name, true); });
   });
+
+  $("#netSalary").addEventListener("input", renderDebtRatio);
+
+  /**
+   * Arată ce parte din venitul net ia rata lunară.
+   * Este o informație orientativă: nu blochează depunerea cererii, pentru că
+   * decizia de acordare aparține comisiei C.A.R.
+   */
+  function renderDebtRatio() {
+    var tile = $("#ratioTile");
+    var note = $("#ratioNote");
+    var salary = V.netSalary($("#netSalary").value);
+    var payment = LM.simulate(state.principal, state.months).monthlyPayment;
+
+    if (!salary.ok) {
+      $("#sumRatio").textContent = "—";
+      $("#ratioFill").style.width = "0";
+      tile.classList.remove("is-over");
+      note.hidden = true;
+      return;
+    }
+
+    var ratio = LM.debtRatio(payment, salary.value);
+    var over = ratio > LM.COMFORT_RATIO * 100;
+
+    $("#sumRatio").textContent = ratio.toFixed(1).replace(".", ",") + "%";
+    $("#ratioFill").style.width = Math.min(ratio, 100) + "%";
+    tile.classList.toggle("is-over", over);
+
+    note.hidden = false;
+    note.classList.toggle("is-over", over);
+    note.textContent = over
+      ? "Rata depășește o treime din venitul tău net. Poți depune cererea, dar ia în calcul " +
+        "o sumă mai mică sau o perioadă mai lungă — comisia C.A.R. analizează și acest raport."
+      : "Rata se încadrează confortabil în venitul tău net, sub o treime din el.";
+  }
 
   var gdpr = $("#gdpr");
   gdpr.addEventListener("change", function () {
@@ -248,6 +305,8 @@
     }
 
     values.loan = LM.simulate(state.principal, state.months);
+    values.loan.netSalary = values.netSalary;
+    values.loan.debtRatio = LM.debtRatio(values.loan.monthlyPayment, values.netSalary);
     values.gdpr = true;
     return values;
   }
@@ -390,6 +449,7 @@
     });
     gdpr.closest(".consent").classList.remove("is-invalid");
     setAmount(state.principal);
+    renderDebtRatio();
   }
 
   function noBackendError() {
@@ -407,7 +467,8 @@
         fullName: data.fullName, cnp: data.cnp,
         idSeries: data.idSeries, idNumber: data.idNumber, idExpiry: data.idExpiry,
         county: data.county, city: data.city, street: data.street, streetNo: data.streetNo,
-        iban: data.iban, email: data.email, phone: data.phone, gdpr: true
+        iban: data.iban, email: data.email, phone: data.phone,
+        netSalary: data.netSalary, gdpr: true
       },
       loan: data.loan,
       regNo: pdf.regNo,
@@ -435,8 +496,10 @@
      5. INIȚIALIZARE
      ============================================================ */
   buildTable();
+  placeTicks();
   setAmount(state.principal);
   setMonths(state.months);
+  renderDebtRatio();
 
   // Data minimă pentru expirarea buletinului: mâine
   var tomorrow = new Date();

@@ -8,6 +8,11 @@
      recoloreze singur controalele (date, range) in modul intunecat. */
   color-scheme: light;
 
+  /* Diametrul butonului glisorului. Stă aici, nu pe input, pentru că
+     etichetele de sub glisor sunt frați, nu descendenți — și au nevoie
+     de aceeași valoare ca să-și calculeze poziția. */
+  --thumb: 30px;
+
   --red: #EA1B23;
   --red-dark: #C2141B;
   --red-soft: #FDECEC;
@@ -219,17 +224,20 @@ a:hover { text-decoration: underline; }
   padding: 6px 14px; border-radius: 999px; font-size: .9375rem; font-variant-numeric: tabular-nums;
 }
 
+/* --thumb: diametrul butonului. Centrul lui se plimbă între --thumb/2 și
+   (lățime - --thumb/2), deci aceeași formulă poziționează și etichetele de dedesubt. */
 input[type="range"] {
   -webkit-appearance: none; appearance: none;
-  width: 100%; height: 30px; background: transparent; cursor: pointer; margin: 0;
+  width: 100%; height: var(--thumb); background: transparent; cursor: pointer; margin: 0;
 }
 input[type="range"]::-webkit-slider-runnable-track {
   height: 10px; border-radius: 999px;
   background: linear-gradient(90deg, var(--red) 0 var(--fill, 50%), var(--line) var(--fill, 50%) 100%);
 }
 input[type="range"]::-webkit-slider-thumb {
-  -webkit-appearance: none; appearance: none;
-  width: 30px; height: 30px; margin-top: -10px; border-radius: 50%;
+  -webkit-appearance: none; appearance: none; box-sizing: border-box;
+  width: var(--thumb); height: var(--thumb); border-radius: 50%;
+  margin-top: calc((10px - var(--thumb)) / 2);
   background: #fff; border: 3px solid var(--red);
   box-shadow: 0 3px 10px rgba(16, 24, 40, .22); transition: transform .12s ease;
 }
@@ -237,16 +245,28 @@ input[type="range"]:active::-webkit-slider-thumb { transform: scale(1.12); }
 input[type="range"]::-moz-range-track { height: 10px; border-radius: 999px; background: var(--line); }
 input[type="range"]::-moz-range-progress { height: 10px; border-radius: 999px; background: var(--red); }
 input[type="range"]::-moz-range-thumb {
-  width: 26px; height: 26px; border-radius: 50%; background: #fff;
+  box-sizing: border-box; width: var(--thumb); height: var(--thumb);
+  border-radius: 50%; background: #fff;
   border: 3px solid var(--red); box-shadow: 0 3px 10px rgba(16, 24, 40, .22);
 }
 
-.slider-ticks { display: flex; justify-content: space-between; margin-top: 6px; }
+/* Containerul are exact lățimea glisorului, deci procentele din --pos
+   (setat din JS) cad peste aceleași poziții ca butonul. */
+.slider-ticks { position: relative; height: 30px; margin-top: 8px; }
 .tick {
+  position: absolute; left: var(--pos, 0); transform: translateX(-50%);
   font: inherit; font-size: .8125rem; font-weight: 600; color: var(--ink-3);
   background: none; border: 0; padding: 4px 8px; border-radius: 8px; cursor: pointer;
+  white-space: nowrap;
+}
+/* Liniuța care leagă vizual eticheta de punctul ei de pe cursă. */
+.tick::before {
+  content: ""; position: absolute; left: 50%; top: -7px;
+  width: 2px; height: 6px; border-radius: 1px;
+  background: var(--line); transform: translateX(-50%);
 }
 .tick:hover, .tick.is-active { color: var(--red-dark); background: var(--red-soft); }
+.tick.is-active::before { background: var(--red); }
 .hint { color: var(--ink-3); font-size: .8125rem; margin-top: 10px; }
 
 .sim-result {
@@ -342,6 +362,34 @@ input[type="range"]::-moz-range-thumb {
 .form-field.is-invalid .field-msg { color: var(--warn); font-weight: 600; }
 
 #cnp, #iban { font-variant-numeric: tabular-nums; letter-spacing: .06em; }
+
+.salary-field { margin-bottom: 18px; max-width: 320px; }
+.input-with-suffix { position: relative; display: flex; align-items: center; }
+.input-with-suffix input { padding-right: 46px; }
+.input-suffix {
+  position: absolute; right: 15px; color: var(--ink-3);
+  font-size: .875rem; font-weight: 600; pointer-events: none;
+}
+
+.ratio-tile { position: relative; }
+.ratio-bar {
+  height: 5px; border-radius: 999px; background: var(--line);
+  overflow: hidden; margin-top: 8px;
+}
+.ratio-bar i {
+  display: block; height: 100%; width: 0; border-radius: 999px;
+  background: var(--ok); transition: width .25s ease, background-color .25s ease;
+}
+.ratio-tile.is-over .ratio-bar i { background: var(--red); }
+.ratio-tile.is-over strong { color: var(--red-dark); }
+.ratio-note {
+  font-size: .875rem; line-height: 1.55; margin-top: 14px;
+  padding: 12px 15px; border-radius: 11px;
+  background: var(--ok-soft); color: #0E6B4A; border: 1px solid rgba(18, 133, 91, .22);
+}
+.ratio-note.is-over {
+  background: #FEF3F3; color: var(--warn); border-color: rgba(180, 35, 42, .22);
+}
 
 .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(160px, 100%), 1fr)); gap: 12px; }
 .summary-grid > div {

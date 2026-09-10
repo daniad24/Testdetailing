@@ -56,7 +56,8 @@ function validatePayload(body) {
     streetNo: V.required(a.streetNo, "numărul", 1),
     iban: V.iban(a.iban),
     email: V.email(a.email),
-    phone: V.phone(a.phone)
+    phone: V.phone(a.phone),
+    netSalary: V.netSalary(a.netSalary)
   };
 
   for (const [field, result] of Object.entries(checks)) {
@@ -91,10 +92,14 @@ function validatePayload(body) {
 
   if (errors.length) return { ok: false, errors };
 
+  const loan = LM.simulate(principal, months);
+  loan.netSalary = clean.netSalary;
+  loan.debtRatio = LM.debtRatio(loan.monthlyPayment, clean.netSalary);
+
   return {
     ok: true,
     applicant: clean,
-    loan: LM.simulate(principal, months),
+    loan,
     regNo: sanitizeRegNo(body.regNo),
     fileName: safeFileName(body.fileName, clean.fullName),
     pdfBuffer
@@ -143,6 +148,9 @@ function getTransporter() {
 const money = (v) =>
   new Intl.NumberFormat("ro-RO", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(v) + " lei";
 
+const ratioText = (l) =>
+  l.debtRatio == null ? "—" : `${l.debtRatio.toFixed(1).replace(".", ",")}%`;
+
 function applicantMail(d) {
   const { applicant: a, loan: l, regNo } = d;
   return {
@@ -159,6 +167,8 @@ function applicantMail(d) {
       `  • Dobândă fixă: ${l.annualRatePct}% pe an`,
       `  • Rată lunară estimată: ${money(l.monthlyPayment)}`,
       `  • Total de rambursat: ${money(l.totalRepayment)}`,
+      `  • Venit net declarat: ${money(l.netSalary)}`,
+      `  • Rata în venitul net: ${ratioText(l)}`,
       `  • Cont pentru virament: ${a.iban}`,
       ``,
       `Cererea va fi analizată de comisia Sanitas CAR, iar rezultatul îți va fi comunicat`,
@@ -178,6 +188,8 @@ function applicantMail(d) {
           ${row("Dobândă fixă", `${l.annualRatePct}% pe an`)}
           ${row("Rată lunară estimată", `<strong style="color:#EA1B23">${money(l.monthlyPayment)}</strong>`)}
           ${row("Total de rambursat", money(l.totalRepayment))}
+          ${row("Venit net declarat", money(l.netSalary))}
+          ${row("Rata în venitul net", escapeHtml(ratioText(l)))}
           ${row("Cont pentru virament", escapeHtml(a.iban))}
         </table>
         <p>Cererea va fi analizată de comisia Sanitas CAR, iar rezultatul îți va fi comunicat
@@ -208,6 +220,9 @@ function officeMail(d) {
       `Dobândă: ${l.annualRatePct}% pe an`,
       `Rată lunară: ${money(l.monthlyPayment)}`,
       `Total de rambursat: ${money(l.totalRepayment)}`,
+      ``,
+      `Venit net declarat: ${money(l.netSalary)}`,
+      `Rata în venitul net: ${ratioText(l)}${l.debtRatio > LM.COMFORT_RATIO * 100 ? "  <-- peste o treime din venit" : ""}`,
       ``,
       `Acord GDPR: bifat de solicitant la depunere.`
     ].join("\n")

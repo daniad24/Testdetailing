@@ -13,6 +13,11 @@
   var MIN_MONTHS = 1;
   var MAX_MONTHS = 24;
 
+  /* Pragul orientativ de îndatorare: rata lunară raportată la venitul net.
+     Nu blochează cererea — decizia aparține comisiei C.A.R. — dar avertizează
+     solicitantul când rata depășește o treime din salariu. */
+  var COMFORT_RATIO = 1 / 3;
+
   /**
    * Rata lunară pentru o anuitate cu rate egale:
    *   R = P * i / (1 - (1 + i)^-n)
@@ -39,6 +44,20 @@
     };
   }
 
+  /**
+   * Ce parte din venitul net lunar ia rata, în procente.
+   * Întoarce null când nu avem un venit valid, ca apelantul să nu afișeze nimic.
+   */
+  function debtRatio(monthlyPayment, netIncome) {
+    if (!(netIncome > 0) || !(monthlyPayment > 0)) return null;
+    return Math.round(monthlyPayment / netIncome * 1000) / 10;
+  }
+
+  function isComfortable(monthlyPayment, netIncome) {
+    var ratio = debtRatio(monthlyPayment, netIncome);
+    return ratio === null ? null : ratio <= COMFORT_RATIO * 100;
+  }
+
   /* ---------- formatare românească: 3.198,60 lei ---------- */
 
   var nfMoney = new Intl.NumberFormat("ro-RO", {
@@ -58,8 +77,11 @@
     TABLE_TERMS: TABLE_TERMS,
     MIN_MONTHS: MIN_MONTHS,
     MAX_MONTHS: MAX_MONTHS,
+    COMFORT_RATIO: COMFORT_RATIO,
     monthlyPayment: monthlyPayment,
     simulate: simulate,
+    debtRatio: debtRatio,
+    isComfortable: isComfortable,
     money: money,
     whole: whole,
     monthsLabel: monthsLabel

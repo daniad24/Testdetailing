@@ -96,6 +96,12 @@ detailing/                  fișierele care erau în depozit înainte de acest
 
 - 5 butoane rapide de sumă: 1.000 / 2.000 / 3.000 / 4.000 / 5.000 lei
 - glisor pentru perioadă, între **1 și 24 de luni**, cu marcaje la 6, 12, 18, 24
+
+  Etichetele de sub glisor sunt poziționate din JS (`positionFor()` în `app.js`),
+  nu întinse uniform: centrul butonului nu ajunge la marginile barei, ci pleacă de
+  la jumătate de buton și se oprește cu jumătate înainte de capăt. Aceeași formulă
+  poziționează și umplerea barei, deci eticheta „6” stă exact sub locul în care
+  glisorul arată 6 luni.
 - dobândă fixă **12% pe an**, anuitate cu rate lunare egale:
 
   ```
@@ -118,26 +124,43 @@ detailing/                  fișierele care erau în depozit înainte de acest
 | IBAN | 24 de caractere, începe cu RO, **control mod-97**, afișat grupat `RO49 AAAA …` |
 | E-mail | format valid |
 | Telefon | 10 cifre (acceptă și `+40…`, îl normalizează) |
+| Salariu net lunar | între 100 și 100.000 lei; acceptă `3500`, `3.500`, `3 500` |
 | Acord GDPR | obligatoriu |
 
 Câmpul devine verde la confirmare și roșu cu mesaj explicativ la eroare.
 Aceleași validări rulează și pe server — cele din browser sunt pentru confortul
 utilizatorului, cele din `server/index.js` sunt cele care decid.
 
-### 3. Documentul PDF
+### 3. Venitul și gradul de îndatorare
+
+Solicitantul își trece salariul net lunar, iar pagina arată imediat ce parte din
+el ia rata: procentul, o bară colorată și un mesaj explicativ. Valoarea se
+actualizează și când se schimbă suma sau perioada din simulator.
+
+Pragul orientativ este **o treime din venitul net** (`COMFORT_RATIO` în
+`assets/js/loan-math.js`). Peste el, mesajul devine roșu și sugerează o sumă mai
+mică sau o perioadă mai lungă — dar **nu blochează depunerea cererii**, pentru că
+decizia de acordare aparține comisiei C.A.R. Raportul apare în documentul PDF și
+în e-mailul către sediu, unde e marcat explicit când depășește pragul.
+
+Ca și termenii împrumutului, raportul se recalculează pe server; valoarea trimisă
+de client nu este preluată ca atare.
+
+### 4. Documentul PDF
 
 Generat cu jsPDF, A4, o singură pagină, cu:
 
 - logo-ul Sanitas, antetul organizației, **număr de înregistrare** și dată emitere
 - secțiunea A — date de identificare membru (nume, CNP, CI, adresă, contact, IBAN)
-- secțiunea B — termenii împrumutului (sumă, perioadă, dobândă, rată, total)
+- secțiunea B — termenii împrumutului (sumă, perioadă, dobândă, rată, total,
+  venit net declarat și rata raportată la el)
 - secțiunea C — declarații și consimțământ GDPR
 - zonă de dată și semnătură + casetă rezervată aprobării CAR
 - diacritice românești corecte (font propriu decupat, inclus în `pdf-assets.js`)
 
 Numele fișierului: `Cerere_Sanitas_CAR_[Nume].pdf`
 
-### 4. Fluxul de trimitere
+### 5. Fluxul de trimitere
 
 1. Utilizatorul alege suma și perioada din simulator
 2. Completează formularul; CNP-ul și IBAN-ul se validează la tastare
@@ -175,6 +198,7 @@ loc: `monthlyPayment()` din `assets/js/loan-math.js`.
 | Ce vrei să schimbi | Unde |
 |---|---|
 | Sumele disponibile, perioada maximă, dobânda | `assets/js/loan-math.js` |
+| Pragul de îndatorare (`COMFORT_RATIO`) | `assets/js/loan-math.js` |
 | Culoarea de brand, spațierile, fonturile | variabilele din `:root`, `assets/css/styles.css` |
 | Datele de contact din antetul PDF-ului | obiectul `ORG` din `assets/js/pdf-doc.js` |
 | Textele declarațiilor din PDF | secțiunea „DECLARAȚII” din `assets/js/pdf-doc.js` |
