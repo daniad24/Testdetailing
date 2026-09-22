@@ -399,6 +399,58 @@ input[type="range"]::-moz-range-thumb {
 .summary-grid span { font-size: .75rem; color: var(--ink-3); font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
 .summary-grid strong { color: var(--ink); font-size: 1.0625rem; font-variant-numeric: tabular-nums; }
 
+/* ---------------- Girant (secțiune pliabilă) ---------------- */
+.guarantor {
+  border: 1.5px solid var(--line); border-radius: 14px;
+  background: #fff; overflow: hidden;
+}
+.guarantor[open] { border-color: var(--ink-3); }
+.guarantor.is-recommended { border-color: var(--red); background: #FFFCFC; }
+
+.guarantor-summary {
+  display: flex; align-items: center; gap: 14px;
+  padding: 18px 20px; cursor: pointer; list-style: none;
+  transition: background-color .18s ease;
+}
+.guarantor-summary::-webkit-details-marker { display: none; }
+.guarantor-summary:hover { background: var(--bg-2); }
+.guarantor-head { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.guarantor-head strong { color: var(--ink); font-size: 1.0625rem; letter-spacing: -.01em; }
+.guarantor-state { font-size: .875rem; color: var(--ink-3); }
+.guarantor.is-recommended .guarantor-state { color: var(--warn); font-weight: 600; }
+.guarantor.is-recommended .legend-idx { background: var(--red); color: #fff; }
+
+/* Săgeata care se rotește la deschidere. */
+.guarantor-toggle {
+  margin-left: auto; flex-shrink: 0;
+  width: 11px; height: 11px; border-right: 2px solid var(--ink-3);
+  border-bottom: 2px solid var(--ink-3); border-radius: 1px;
+  transform: rotate(45deg) translate(-2px, -2px);
+  transition: transform .2s ease;
+}
+.guarantor[open] .guarantor-toggle { transform: rotate(-135deg) translate(-2px, -2px); }
+
+.guarantor-body { padding: 4px 20px 22px; border-top: 1px solid var(--line); }
+.guarantor-intro {
+  font-size: .875rem; color: var(--ink-3); line-height: 1.6;
+  margin: 16px 0 20px; max-width: 68ch;
+}
+
+.form-field select {
+  font: inherit; color: var(--ink); background: #fff;
+  border: 1.5px solid var(--line); border-radius: 11px;
+  padding: 13px 15px; width: 100%; min-height: 50px; cursor: pointer;
+  transition: border-color .18s ease, box-shadow .18s ease, background-color .18s ease;
+}
+.form-field select:focus { outline: 0; border-color: var(--red); box-shadow: 0 0 0 4px rgba(234, 27, 35, .12); }
+.form-field.is-valid select { border-color: var(--ok); background: var(--ok-soft); }
+.form-field.is-invalid select { border-color: var(--warn); background: #FEF3F3; }
+
+@media (max-width: 560px) {
+  .guarantor-summary { padding: 15px 16px; gap: 11px; }
+  .guarantor-body { padding: 4px 16px 18px; }
+}
+
 .consent { background: var(--bg-2); border: 1px solid var(--line); border-radius: 12px; padding: 18px; }
 .check { display: flex; gap: 12px; align-items: flex-start; font-weight: 400 !important; font-size: .9375rem !important; color: var(--ink-2) !important; margin: 0 !important; cursor: pointer; }
 .check input { width: 22px; height: 22px; accent-color: var(--red); flex-shrink: 0; margin-top: 1px; cursor: pointer; }

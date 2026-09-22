@@ -77,6 +77,30 @@ function validatePayload(body) {
     errors.push(`loan.months: perioada trebuie să fie între ${LM.MIN_MONTHS} și ${LM.MAX_MONTHS} luni.`);
   }
 
+  // Girantul e opțional: îl validăm doar dacă cererea chiar vine cu unul.
+  const g = body && body.guarantor;
+  let guarantor = null;
+  if (g && typeof g === "object") {
+    const gChecks = {
+      fullName: V.fullName(g.fullName),
+      idSeries: V.idSeries(g.idSeries),
+      idNumber: V.idNumber(g.idNumber),
+      cnp: V.cnp(g.cnp),
+      phone: V.phone(g.phone),
+      address: V.required(g.address, "adresa girantului", 8),
+      relation: V.required(g.relation, "calitatea girantului", 3),
+      netSalary: V.netSalary(g.netSalary)
+    };
+    guarantor = {};
+    for (const [field, result] of Object.entries(gChecks)) {
+      if (result.ok) guarantor[field] = result.value;
+      else errors.push(`guarantor.${field}: ${result.msg}`);
+    }
+    if (guarantor.cnp && guarantor.cnp === clean.cnp) {
+      errors.push("guarantor.cnp: girantul nu poate fi aceeași persoană cu solicitantul.");
+    }
+  }
+
   const pdfBase64 = String((body && body.pdfBase64) || "");
   if (!pdfBase64) errors.push("pdfBase64: documentul lipsește.");
   else if (!/^[A-Za-z0-9+/=\s]+$/.test(pdfBase64)) errors.push("pdfBase64: conținut invalid.");
@@ -95,10 +119,14 @@ function validatePayload(body) {
   const loan = LM.simulate(principal, months);
   loan.netSalary = clean.netSalary;
   loan.debtRatio = LM.debtRatio(loan.monthlyPayment, clean.netSalary);
+  if (guarantor) {
+    guarantor.debtRatio = LM.debtRatio(loan.monthlyPayment, guarantor.netSalary);
+  }
 
   return {
     ok: true,
     applicant: clean,
+    guarantor,
     loan,
     regNo: sanitizeRegNo(body.regNo),
     fileName: safeFileName(body.fileName, clean.fullName),
@@ -148,6 +176,25 @@ function getTransporter() {
 const money = (v) =>
   new Intl.NumberFormat("ro-RO", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(v) + " lei";
 
+/** Blocul despre girant din e-mailul administrativ; o singură linie când nu există. */
+function guarantorLines(d) {
+  const g = d.guarantor;
+  if (!g) return ["GIRANT: cererea este depusă fără girant.", ""];
+  const over = g.debtRatio != null && g.debtRatio > LM.COMFORT_RATIO * 100;
+  return [
+    "GIRANT",
+    `  Nume: ${g.fullName}`,
+    `  CNP: ${g.cnp}`,
+    `  CI: seria ${g.idSeries}, nr. ${g.idNumber}`,
+    `  Domiciliu: ${g.address}`,
+    `  Telefon: ${g.phone}`,
+    `  Calitatea față de solicitant: ${g.relation}`,
+    `  Venit net declarat: ${money(g.netSalary)}`,
+    `  Rata în venitul girantului: ${ratioText(g)}${over ? "  <-- peste o treime din venit" : ""}`,
+    ""
+  ];
+}
+
 const ratioText = (l) =>
   l.debtRatio == null ? "—" : `${l.debtRatio.toFixed(1).replace(".", ",")}%`;
 
@@ -171,6 +218,9 @@ function applicantMail(d) {
       `  • Rata în venitul net: ${ratioText(l)}`,
       `  • Cont pentru virament: ${a.iban}`,
       ``,
+      ...(d.guarantor
+        ? [`Cererea a fost înregistrată cu girant: ${d.guarantor.fullName}.`, ``]
+        : []),
       `Cererea va fi analizată de comisia Sanitas CAR, iar rezultatul îți va fi comunicat`,
       `pe acest e-mail sau la numărul de telefon ${a.phone}.`,
       ``,
@@ -192,6 +242,7 @@ function applicantMail(d) {
           ${row("Rata în venitul net", escapeHtml(ratioText(l)))}
           ${row("Cont pentru virament", escapeHtml(a.iban))}
         </table>
+        ${d.guarantor ? `<p>Cererea a fost înregistrată cu girant: <strong>${escapeHtml(d.guarantor.fullName)}</strong>.</p>` : ""}
         <p>Cererea va fi analizată de comisia Sanitas CAR, iar rezultatul îți va fi comunicat
            pe acest e-mail sau la telefon ${escapeHtml(a.phone)}.</p>
         <p style="color:#6b7280;font-size:13px">Casa de Ajutor Reciproc Sanitas București</p>
@@ -224,6 +275,7 @@ function officeMail(d) {
       `Venit net declarat: ${money(l.netSalary)}`,
       `Rata în venitul net: ${ratioText(l)}${l.debtRatio > LM.COMFORT_RATIO * 100 ? "  <-- peste o treime din venit" : ""}`,
       ``,
+      ...guarantorLines(d),
       `Acord GDPR: bifat de solicitant la depunere.`
     ].join("\n")
   };
@@ -261,7 +313,10 @@ app.post("/api/cerere", async (req, res) => {
       await fs.writeFile(path.join(dir, `${stamp}_${parsed.fileName}`), parsed.pdfBuffer);
       await fs.writeFile(
         path.join(dir, `${stamp}_${parsed.fileName}.json`),
-        JSON.stringify({ regNo: parsed.regNo, applicant: parsed.applicant, loan: parsed.loan }, null, 2)
+        JSON.stringify({
+          regNo: parsed.regNo, applicant: parsed.applicant,
+          loan: parsed.loan, guarantor: parsed.guarantor
+        }, null, 2)
       );
       console.log(`[DRY_RUN] Cerere salvată local: ${parsed.regNo} — ${parsed.applicant.fullName}`);
       return res.json({ ok: true, regNo: parsed.regNo, dryRun: true });

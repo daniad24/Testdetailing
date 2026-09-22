@@ -297,6 +297,97 @@
           <p class="hint">Poți modifica suma și perioada oricând din <a href="#simulator">simulator</a>.</p>
         </fieldset>
 
+        <!-- Girantul e opțional: secțiunea deschisă înseamnă „depun cererea cu girant”. -->
+        <details class="guarantor" id="guarantorDetails">
+          <summary class="guarantor-summary">
+            <span class="legend-idx">E</span>
+            <span class="guarantor-head">
+              <strong>Girant</strong>
+              <span class="guarantor-state" id="guarantorState">
+                Opțional — rata ta se încadrează în venit
+              </span>
+            </span>
+            <span class="guarantor-toggle" aria-hidden="true"></span>
+          </summary>
+
+          <div class="guarantor-body">
+            <p class="guarantor-intro" id="guarantorIntro">
+              Girantul răspunde pentru împrumut dacă titularul nu mai plătește, așa că are
+              nevoie de aceleași date de identificare. Dacă depui cererea fără girant,
+              închide secțiunea — câmpurile de aici nu vor fi trimise.
+            </p>
+
+            <div class="grid-2">
+              <div class="form-field span-2">
+                <label for="gFullName">Nume și prenume girant <span class="req">*</span></label>
+                <input type="text" id="gFullName" name="gFullName" autocomplete="off"
+                       placeholder="Ex: Ionescu Andrei">
+                <p class="field-msg" data-msg-for="gFullName">Conform cărții de identitate a girantului.</p>
+              </div>
+
+              <div class="form-field">
+                <label for="gIdSeries">Seria buletinului <span class="req">*</span></label>
+                <input type="text" id="gIdSeries" name="gIdSeries" placeholder="Ex: RT" maxlength="2">
+                <p class="field-msg" data-msg-for="gIdSeries">2 litere mari.</p>
+              </div>
+
+              <div class="form-field">
+                <label for="gIdNumber">Numărul buletinului <span class="req">*</span></label>
+                <input type="text" id="gIdNumber" name="gIdNumber" placeholder="Ex: 654321"
+                       maxlength="6" inputmode="numeric">
+                <p class="field-msg" data-msg-for="gIdNumber">6 cifre.</p>
+              </div>
+
+              <div class="form-field">
+                <label for="gCnp">CNP girant <span class="req">*</span></label>
+                <input type="text" id="gCnp" name="gCnp" placeholder="13 cifre" maxlength="13"
+                       inputmode="numeric" autocomplete="off">
+                <p class="field-msg" data-msg-for="gCnp">Exact 13 cifre, verificate matematic.</p>
+              </div>
+
+              <div class="form-field">
+                <label for="gPhone">Telefon girant <span class="req">*</span></label>
+                <input type="tel" id="gPhone" name="gPhone" placeholder="07XXXXXXXX"
+                       maxlength="10" inputmode="numeric">
+                <p class="field-msg" data-msg-for="gPhone">10 cifre.</p>
+              </div>
+
+              <div class="form-field span-2">
+                <label for="gAddress">Adresă de domiciliu <span class="req">*</span></label>
+                <input type="text" id="gAddress" name="gAddress"
+                       placeholder="Ex: Str. Unirii nr. 14, Voluntari, jud. Ilfov">
+                <p class="field-msg" data-msg-for="gAddress">Localitate, stradă și număr.</p>
+              </div>
+
+              <div class="form-field">
+                <label for="gRelation">Calitatea față de solicitant <span class="req">*</span></label>
+                <select id="gRelation" name="gRelation">
+                  <option value="">Alege din listă…</option>
+                  <option>Coleg de serviciu</option>
+                  <option>Soț / soție</option>
+                  <option>Rudă de gradul I</option>
+                  <option>Rudă de gradul II</option>
+                  <option>Prieten</option>
+                  <option>Altă situație</option>
+                </select>
+                <p class="field-msg" data-msg-for="gRelation">Cum îl cunoști pe girant.</p>
+              </div>
+
+              <div class="form-field">
+                <label for="gNetSalary">Salariu net lunar girant <span class="req">*</span></label>
+                <div class="input-with-suffix">
+                  <input type="text" id="gNetSalary" name="gNetSalary" placeholder="Ex: 4000"
+                         inputmode="numeric" autocomplete="off">
+                  <span class="input-suffix">lei</span>
+                </div>
+                <p class="field-msg" data-msg-for="gNetSalary">Venitul din care ar putea acoperi rata.</p>
+              </div>
+            </div>
+
+            <p class="ratio-note" id="gRatioNote" hidden></p>
+          </div>
+        </details>
+
         <div class="form-field consent">
           <label class="check">
             <input type="checkbox" id="gdpr" name="gdpr" required>

@@ -125,6 +125,7 @@ detailing/                  fișierele care erau în depozit înainte de acest
 | E-mail | format valid |
 | Telefon | 10 cifre (acceptă și `+40…`, îl normalizează) |
 | Salariu net lunar | între 100 și 100.000 lei; acceptă `3500`, `3.500`, `3 500` |
+| Câmpurile girantului | aceleași reguli ca la solicitant, dar **doar când secțiunea e deschisă**; CNP-ul trebuie să difere de al solicitantului |
 | Acord GDPR | obligatoriu |
 
 Câmpul devine verde la confirmare și roșu cu mesaj explicativ la eroare.
@@ -146,21 +147,52 @@ decizia de acordare aparține comisiei C.A.R. Raportul apare în documentul PDF 
 Ca și termenii împrumutului, raportul se recalculează pe server; valoarea trimisă
 de client nu este preluată ca atare.
 
-### 4. Documentul PDF
+### 4. Girantul (opțional)
 
-Generat cu jsPDF, A4, o singură pagină, cu:
+Secțiunea de girant e pliabilă și stă la finalul formularului, după datele
+solicitantului. **Starea ei decide totul**: deschisă înseamnă „depun cererea cu
+girant”, iar câmpurile devin obligatorii; închisă înseamnă fără girant, iar ce e
+scris acolo nu se trimite și nu blochează depunerea.
+
+Sistemul îl **recomandă** — antet roșu și secțiune deschisă automat — când rata
+depășește pragul de confort din venitul solicitantului, adică același
+`COMFORT_RATIO`. Dacă utilizatorul o închide la loc, nu i se mai redeschide
+singură.
+
+Datele cerute: nume, CNP, serie și număr CI, adresă, telefon, calitatea față de
+solicitant (listă derulantă) și venitul net. Ultimul e folosit ca să arate ce
+parte din rată ar acoperi girantul, dacă ar ajunge să plătească el.
+
+Girantul nu poate avea același CNP ca solicitantul — nimeni nu girează pentru
+sine. Verificarea rulează și în pagină, și pe server.
+
+> Datele și pragul de mai sus sunt o propunere de pornire, nu o regulă preluată
+> din statut. Înainte de punerea în producție, ele trebuie confirmate de comisia
+> Sanitas CAR; se modifică din `GUARANTOR_FIELDS` (`assets/js/app.js`) și
+> `COMFORT_RATIO` (`assets/js/loan-math.js`).
+
+### 5. Documentul PDF
+
+Generat cu jsPDF, A4, cu:
 
 - logo-ul Sanitas, antetul organizației, **număr de înregistrare** și dată emitere
 - secțiunea A — date de identificare membru (nume, CNP, CI, adresă, contact, IBAN)
 - secțiunea B — termenii împrumutului (sumă, perioadă, dobândă, rată, total,
   venit net declarat și rata raportată la el)
 - secțiunea C — declarații și consimțământ GDPR
-- zonă de dată și semnătură + casetă rezervată aprobării CAR
+- secțiunea de girant și angajamentul lui de garanție, când cererea are girant
+- zonă de dată și semnături (a treia casetă apare doar cu girant) + casetă
+  rezervată aprobării CAR
 - diacritice românești corecte (font propriu decupat, inclus în `pdf-assets.js`)
 
 Numele fișierului: `Cerere_Sanitas_CAR_[Nume].pdf`
 
-### 5. Fluxul de trimitere
+Layoutul curge pe câte pagini are nevoie: fiecare bloc verifică întâi dacă mai
+încape, iar când nu, deschide o pagină nouă cu antet redus. Numerotarea
+(„Pagina 1 din 2”) se aplică la final, când se știe totalul. O cerere fără girant
+rămâne pe o pagină; una cu girant ocupă două.
+
+### 6. Fluxul de trimitere
 
 1. Utilizatorul alege suma și perioada din simulator
 2. Completează formularul; CNP-ul și IBAN-ul se validează la tastare

@@ -5,6 +5,10 @@
    Documentul este construit cu jsPDF, în format A4, cu font
    propriu (subset Liberation Sans) pentru a reda corect
    diacriticele românești: ă â î ș ț.
+
+   Layoutul curge pe câte pagini are nevoie: fiecare bloc verifică
+   întâi dacă mai încape, iar când nu, deschide o pagină nouă cu
+   antet redus. Numerotarea se aplică la final, când se știe totalul.
    ============================================================ */
 (function (global) {
   "use strict";
@@ -16,6 +20,9 @@
   };
 
   var PAGE = { w: 210, h: 297, margin: 18 };
+  var FOOTER_Y = PAGE.h - 14;        // linia de deasupra footerului
+  var CONTENT_BOTTOM = FOOTER_Y - 6; // conținutul nu coboară sub ea
+
   var RED = [234, 27, 35];
   var INK = [22, 24, 29];
   var MUTED = [107, 114, 128];
@@ -23,7 +30,6 @@
   var SOFT = [248, 249, 251];
 
   var FONT = "RomanianSans";
-  var fontsRegistered = false;
 
   function registerFonts(doc) {
     var a = global.SANITAS_ASSETS;
@@ -32,7 +38,6 @@
     doc.addFont("RomanianSans-Regular.ttf", FONT, "normal");
     doc.addFileToVFS("RomanianSans-Bold.ttf", a.fontBold);
     doc.addFont("RomanianSans-Bold.ttf", FONT, "bold");
-    fontsRegistered = true;
     return true;
   }
 
@@ -66,7 +71,10 @@
      data = {
        fullName, cnp, idSeries, idNumber, idExpiry,
        county, city, street, streetNo, iban, email, phone,
-       loan: { principal, months, monthlyPayment, totalRepayment, annualRatePct }
+       loan: { principal, months, monthlyPayment, totalRepayment,
+               annualRatePct, netSalary, debtRatio },
+       guarantor: { fullName, cnp, idSeries, idNumber, phone,
+                    address, netSalary, relation } | null
      }
      ============================================================ */
   function build(data) {
@@ -81,10 +89,19 @@
     var issuedAt = new Date();
     var regNo = data.regNo || registrationNumber(issuedAt);
     var loan = data.loan;
+    var guarantor = data.guarantor || null;
+
     var M = PAGE.margin;
     var contentW = PAGE.w - M * 2;
+    var y = M;
 
-    /* ---------- helpers ---------- */
+    /* ---------- litere de secțiune, atribuite în ordinea apariției ---------- */
+    var letterIndex = 0;
+    function nextLetter() {
+      return "ABCDEFGH".charAt(letterIndex++);
+    }
+
+    /* ---------- primitive ---------- */
     function setFont(style, size, color) {
       doc.setFont(hasFont ? FONT : "helvetica", style);
       doc.setFontSize(size);
@@ -92,9 +109,108 @@
       doc.setTextColor(c[0], c[1], c[2]);
     }
 
-    /* ================= ANTET ================= */
-    var y = M;
+    /* Antet redus, pentru paginile 2 și următoarele. */
+    function slimHeader() {
+      var logo = global.SANITAS_ASSETS && global.SANITAS_ASSETS.logoPng;
+      if (logo) doc.addImage("data:image/png;base64," + logo, "PNG", M, M - 1, 10, 10.9);
+      setFont("bold", 9.5);
+      doc.text(T(ORG.name), M + 13, M + 5);
+      setFont("normal", 7.6, MUTED);
+      doc.text(T("Cerere " + regNo), PAGE.w - M, M + 5, { align: "right" });
+      doc.setDrawColor(RED[0], RED[1], RED[2]);
+      doc.setLineWidth(0.7);
+      doc.line(M, M + 8.6, PAGE.w - M, M + 8.6);
+      return M + 15;
+    }
 
+    /** Deschide o pagină nouă dacă blocul care urmează nu mai încape. */
+    function need(height) {
+      if (y + height > CONTENT_BOTTOM) {
+        doc.addPage();
+        y = slimHeader();
+      }
+    }
+
+    function sectionTitle(label) {
+      doc.setFillColor(RED[0], RED[1], RED[2]);
+      doc.rect(M, y - 3.6, 2.4, 5.4, "F");
+      setFont("bold", 9.8, INK);
+      doc.text(T(label), M + 5, y);
+      y += 4;
+    }
+
+    /**
+     * Tabel etichetă/valoare. Fiecare rând verifică singur dacă încape,
+     * deci un tabel lung se rupe curat între pagini.
+     */
+    function dataTable(rows, opts) {
+      var options = opts || {};
+      var labelW = contentW * 0.42;
+      var padX = 3.4;
+      var lineH = 3.6;
+
+      rows.forEach(function (row, index) {
+        var label = T(String(row[0]));
+        var value = T(String(row[1] == null || row[1] === "" ? "—" : row[1]));
+        var isKey = (options.highlightRows || []).indexOf(index) !== -1;
+
+        setFont("normal", 8.4, MUTED);
+        var labelLines = doc.splitTextToSize(label, labelW - padX * 2);
+        setFont(isKey ? "bold" : "normal", isKey ? 9.2 : 8.7, INK);
+        var valueLines = doc.splitTextToSize(value, contentW - labelW - padX * 2);
+
+        var rowH = Math.max(labelLines.length, valueLines.length) * lineH + 2.7;
+        need(rowH);
+
+        if (index % 2 === 0) {
+          doc.setFillColor(SOFT[0], SOFT[1], SOFT[2]);
+          doc.rect(M, y, contentW, rowH, "F");
+        }
+        if (isKey) {
+          doc.setFillColor(253, 236, 236);
+          doc.rect(M, y, contentW, rowH, "F");
+        }
+        doc.setDrawColor(LINE[0], LINE[1], LINE[2]);
+        doc.setLineWidth(0.2);
+        doc.rect(M, y, contentW, rowH);
+        doc.line(M + labelW, y, M + labelW, y + rowH);
+
+        setFont("normal", 8.4, MUTED);
+        doc.text(labelLines, M + padX, y + 3.55);
+        setFont(isKey ? "bold" : "normal", isKey ? 9.2 : 8.7, isKey ? RED : INK);
+        doc.text(valueLines, M + labelW + padX, y + 3.55);
+
+        y += rowH;
+      });
+    }
+
+    /** Paragrafe cu bulină, folosite pentru declarații. */
+    function bullets(list, size, color) {
+      setFont("normal", size, color);
+      list.forEach(function (paragraph) {
+        var lines = doc.splitTextToSize(T("• " + paragraph), contentW - 2);
+        need(lines.length * 3.5 + 1.4);
+        setFont("normal", size, color);
+        doc.text(lines, M + 1, y);
+        y += lines.length * 3.5 + 1.4;
+      });
+    }
+
+    function signatureBox(x, boxY, w, h, label, value) {
+      doc.setDrawColor(LINE[0], LINE[1], LINE[2]);
+      doc.setLineWidth(0.25);
+      doc.roundedRect(x, boxY, w, h, 2, 2, "S");
+      setFont("bold", 7.8, MUTED);
+      doc.text(T(label), x + 4, boxY + 5.2);
+      if (value) {
+        setFont("bold", 10, INK);
+        doc.text(T(value), x + 4, boxY + 11.8);
+      }
+      doc.setDrawColor(180, 186, 196);
+      doc.line(x + 4, boxY + h - 6, x + w - 4, boxY + h - 6);
+    }
+
+    /* ================= ANTETUL PRIMEI PAGINI ================= */
     var logo = global.SANITAS_ASSETS && global.SANITAS_ASSETS.logoPng;
     if (logo) {
       // Spațiu dedicat identității vizuale (logo Sanitas CAR)
@@ -115,7 +231,6 @@
     doc.setDrawColor(LINE[0], LINE[1], LINE[2]);
     doc.line(M, y + 1.3, PAGE.w - M, y + 1.3);
 
-    /* ---------- Nr. înregistrare / dată ---------- */
     y += 6.6;
     setFont("normal", 8.8, MUTED);
     doc.text(T("Nr. înregistrare: ") + regNo, M, y);
@@ -124,9 +239,7 @@
     /* ================= TITLU ================= */
     y += 9.5;
     setFont("bold", 13.5);
-    var title = doc.splitTextToSize(
-      T("CERERE DE ÎNSCRIERE ȘI ACORDARE ÎMPRUMUT"), contentW
-    );
+    var title = doc.splitTextToSize(T("CERERE DE ÎNSCRIERE ȘI ACORDARE ÎMPRUMUT"), contentW);
     doc.text(title, PAGE.w / 2, y, { align: "center" });
     y += title.length * 6;
     setFont("bold", 10.5, RED);
@@ -142,9 +255,9 @@
     doc.text(intro, M, y);
     y += intro.length * 3.9 + 4.4;
 
-    /* ================= SECȚIUNEA A ================= */
-    y = sectionTitle(doc, T, setFont, "A. DATE DE IDENTIFICARE MEMBRU", M, y, contentW);
-    y = dataTable(doc, T, setFont, M, y, contentW, [
+    /* ================= DATE DE IDENTIFICARE ================= */
+    sectionTitle(nextLetter() + ". DATE DE IDENTIFICARE MEMBRU");
+    dataTable([
       ["Nume și prenume", data.fullName],
       ["Cod Numeric Personal (CNP)", spaced(data.cnp)],
       ["Carte de identitate", "Seria " + data.idSeries + ", Nr. " + data.idNumber],
@@ -155,9 +268,10 @@
       ["Cont bancar (IBAN)", data.ibanFormatted || data.iban]
     ]);
 
-    /* ================= SECȚIUNEA B ================= */
+    /* ================= TERMENII ÎMPRUMUTULUI ================= */
     y += 5.4;
-    y = sectionTitle(doc, T, setFont, "B. TERMENII ÎMPRUMUTULUI SOLICITAT", M, y, contentW);
+    need(12);
+    sectionTitle(nextLetter() + ". TERMENII ÎMPRUMUTULUI SOLICITAT");
     var termRows = [
       ["Suma solicitată", money(loan.principal)],
       ["Perioada de rambursare", loan.months === 1 ? "1 lună" : loan.months + " luni"],
@@ -171,15 +285,45 @@
         termRows.push(["Rata în venitul net", fmt(loan.debtRatio, 1) + "%"]);
       }
     }
-    y = dataTable(doc, T, setFont, M, y, contentW, termRows, { highlightRows: [3] });
+    dataTable(termRows, { highlightRows: [3] });
+
+    /* ================= GIRANT (doar dacă există) ================= */
+    if (guarantor) {
+      y += 5.4;
+      need(20);
+      sectionTitle(nextLetter() + ". GIRANT");
+
+      var gRows = [
+        ["Nume și prenume", guarantor.fullName],
+        ["Cod Numeric Personal (CNP)", spaced(guarantor.cnp)],
+        ["Carte de identitate", "Seria " + guarantor.idSeries + ", Nr. " + guarantor.idNumber],
+        ["Adresă de domiciliu", guarantor.address],
+        ["Telefon de contact", guarantor.phone],
+        ["Calitatea față de solicitant", guarantor.relation]
+      ];
+      if (guarantor.netSalary) {
+        gRows.push(["Venit net lunar declarat", money(guarantor.netSalary)]);
+        if (guarantor.debtRatio != null) {
+          gRows.push(["Rata în venitul girantului", fmt(guarantor.debtRatio, 1) + "%"]);
+        }
+      }
+      dataTable(gRows);
+
+      y += 3.4;
+      bullets([
+        "Subsemnatul/Subsemnata, în calitate de girant, garantez pentru rambursarea " +
+          "împrumutului solicitat mai sus și mă oblig ca, în caz de neplată de către titular, " +
+          "să achit ratele rămase, în condițiile statutului C.A.R. Sanitas București."
+      ], 7.9, [60, 66, 78]);
+    }
 
     /* ================= DECLARAȚII ================= */
     y += 5.4;
+    need(14);
     setFont("bold", 9.4);
-    doc.text(T("C. DECLARAȚII ȘI CONSIMȚĂMÂNT"), M, y);
+    doc.text(T(nextLetter() + ". DECLARAȚII ȘI CONSIMȚĂMÂNT"), M, y);
     y += 4.4;
-    setFont("normal", 7.9, [60, 66, 78]);
-    var decl = [
+    bullets([
       "Declar pe propria răspundere că datele înscrise în prezenta cerere, inclusiv venitul " +
         "net declarat, sunt complete și conforme cu realitatea și cu actul de identitate prezentat.",
       "Mă oblig să restitui împrumutul acordat în ratele lunare stabilite, împreună cu dobânda " +
@@ -187,23 +331,28 @@
       "Îmi exprim consimțământul pentru prelucrarea datelor cu caracter personal cuprinse în " +
         "prezenta cerere, în scopul analizării și administrării împrumutului, în conformitate cu " +
         "Regulamentul (UE) 2016/679 (GDPR)."
-    ];
-    decl.forEach(function (paragraph) {
-      var lines = doc.splitTextToSize(T("• " + paragraph), contentW - 2);
-      doc.text(lines, M + 1, y);
-      y += lines.length * 3.5 + 1.4;
-    });
+    ], 7.9, [60, 66, 78]);
 
-    /* ================= SEMNĂTURĂ ================= */
+    /* ================= SEMNĂTURI ================= */
     y += 4.6;
     var boxH = 19;
-    var half = (contentW - 6) / 2;
+    need(boxH + 19);
 
-    signatureBox(doc, T, setFont, M, y, half, boxH, "Data completării", formatDate(issuedAt));
-    signatureBox(doc, T, setFont, M + half + 6, y, half, boxH, "Semnătura solicitantului", "");
+    var boxes = [
+      ["Data completării", formatDate(issuedAt)],
+      ["Semnătura solicitantului", ""]
+    ];
+    if (guarantor) boxes.push(["Semnătura girantului", ""]);
+
+    var gap = 6;
+    var boxW = (contentW - gap * (boxes.length - 1)) / boxes.length;
+    boxes.forEach(function (box, i) {
+      signatureBox(M + i * (boxW + gap), y, boxW, boxH, box[0], box[1]);
+    });
     y += boxH + 5;
 
     /* ---------- Zonă rezervată CAR ---------- */
+    need(14);
     doc.setFillColor(SOFT[0], SOFT[1], SOFT[2]);
     doc.setDrawColor(LINE[0], LINE[1], LINE[2]);
     doc.roundedRect(M, y, contentW, 14, 2, 2, "FD");
@@ -215,87 +364,23 @@
 
     var contentBottom = y + 14;
 
-    /* ================= FOOTER ================= */
-    var fy = PAGE.h - 14;
-    doc.setDrawColor(LINE[0], LINE[1], LINE[2]);
-    doc.setLineWidth(0.25);
-    doc.line(M, fy, PAGE.w - M, fy);
-    setFont("normal", 7.4, MUTED);
-    doc.text(T("Document generat automat de platforma Sanitas CAR · " + regNo), M, fy + 5);
-    doc.text(T("Pagina 1 din 1"), PAGE.w - M, fy + 5, { align: "right" });
+    /* ================= FOOTER, pe toate paginile ================= */
+    var pages = doc.getNumberOfPages();
+    for (var i = 1; i <= pages; i++) {
+      doc.setPage(i);
+      doc.setDrawColor(LINE[0], LINE[1], LINE[2]);
+      doc.setLineWidth(0.25);
+      doc.line(M, FOOTER_Y, PAGE.w - M, FOOTER_Y);
+      setFont("normal", 7.4, MUTED);
+      doc.text(T("Document generat automat de platforma Sanitas CAR · " + regNo), M, FOOTER_Y + 5);
+      doc.text(T("Pagina " + i + " din " + pages), PAGE.w - M, FOOTER_Y + 5, { align: "right" });
+    }
 
     return {
       doc: doc, regNo: regNo, issuedAt: issuedAt,
       fileName: fileName(data.fullName),
-      contentBottom: contentBottom, footerTop: fy
+      pages: pages, contentBottom: contentBottom, footerTop: FOOTER_Y
     };
-  }
-
-  /* ---------------- componente de desen ---------------- */
-
-  function sectionTitle(doc, T, setFont, label, x, y, w) {
-    doc.setFillColor(RED[0], RED[1], RED[2]);
-    doc.rect(x, y - 3.6, 2.4, 5.4, "F");
-    setFont("bold", 9.8, INK);
-    doc.text(T(label), x + 5, y);
-    return y + 4;
-  }
-
-  function dataTable(doc, T, setFont, x, y, w, rows, opts) {
-    var options = opts || {};
-    var labelW = w * 0.42;
-    var padX = 3.4;
-    var lineH = 3.6;
-
-    doc.setDrawColor(LINE[0], LINE[1], LINE[2]);
-    doc.setLineWidth(0.2);
-
-    rows.forEach(function (row, index) {
-      var label = T(String(row[0]));
-      var value = T(String(row[1] == null || row[1] === "" ? "—" : row[1]));
-
-      setFont("normal", 8.4, MUTED);
-      var labelLines = doc.splitTextToSize(label, labelW - padX * 2);
-      var isKey = (options.highlightRows || []).indexOf(index) !== -1;
-      setFont(isKey ? "bold" : "normal", isKey ? 9.2 : 8.7, INK);
-      var valueLines = doc.splitTextToSize(value, w - labelW - padX * 2);
-
-      var rowH = Math.max(labelLines.length, valueLines.length) * lineH + 2.7;
-
-      if (index % 2 === 0) {
-        doc.setFillColor(SOFT[0], SOFT[1], SOFT[2]);
-        doc.rect(x, y, w, rowH, "F");
-      }
-      if (isKey) {
-        doc.setFillColor(253, 236, 236);
-        doc.rect(x, y, w, rowH, "F");
-      }
-      doc.rect(x, y, w, rowH); // contur
-      doc.line(x + labelW, y, x + labelW, y + rowH);
-
-      setFont("normal", 8.4, MUTED);
-      doc.text(labelLines, x + padX, y + 3.55);
-      setFont(isKey ? "bold" : "normal", isKey ? 9.2 : 8.7, isKey ? RED : INK);
-      doc.text(valueLines, x + labelW + padX, y + 3.55);
-
-      y += rowH;
-    });
-
-    return y;
-  }
-
-  function signatureBox(doc, T, setFont, x, y, w, h, label, value) {
-    doc.setDrawColor(LINE[0], LINE[1], LINE[2]);
-    doc.setLineWidth(0.25);
-    doc.roundedRect(x, y, w, h, 2, 2, "S");
-    setFont("bold", 7.8, MUTED);
-    doc.text(T(label), x + 4, y + 5.2);
-    if (value) {
-      setFont("bold", 10, INK);
-      doc.text(T(value), x + 4, y + 11.8);
-    }
-    doc.setDrawColor(180, 186, 196);
-    doc.line(x + 4, y + h - 6, x + w - 4, y + h - 6);
   }
 
   /* ---------------- formatare ---------------- */

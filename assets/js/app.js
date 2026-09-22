@@ -48,6 +48,7 @@
     monthsOut.textContent = LM.monthsLabel(sim.months);
     highlightTable();
     renderDebtRatio();
+    updateGuarantorState();
   }
 
   function setAmount(value) {
@@ -163,8 +164,25 @@
     netSalary: function (v) { return V.netSalary(v); }
   };
 
+  /* Câmpurile girantului. Se validează doar când secțiunea e deschisă —
+     altfel cererea se depune fără girant, iar ce e scris aici se ignoră. */
+  var GUARANTOR_FIELDS = {
+    gFullName: function (v) { return V.fullName(v); },
+    gIdSeries: function (v) { return V.idSeries(v); },
+    gIdNumber: function (v) { return V.idNumber(v); },
+    gCnp: function (v) { return V.cnp(v); },
+    gPhone: function (v) { return V.phone(v); },
+    gAddress: function (v) { return V.required(v, "adresa girantului", 8); },
+    gRelation: function (v) { return V.required(v, "calitatea față de solicitant", 3); },
+    gNetSalary: function (v) { return V.netSalary(v); }
+  };
+
+  var ALL_FIELDS = {};
+  Object.keys(FIELDS).forEach(function (k) { ALL_FIELDS[k] = FIELDS[k]; });
+  Object.keys(GUARANTOR_FIELDS).forEach(function (k) { ALL_FIELDS[k] = GUARANTOR_FIELDS[k]; });
+
   var DEFAULT_HINTS = {};
-  Object.keys(FIELDS).forEach(function (name) {
+  Object.keys(ALL_FIELDS).forEach(function (name) {
     var msg = document.querySelector('[data-msg-for="' + name + '"]');
     DEFAULT_HINTS[name] = msg ? msg.textContent : "";
   });
@@ -194,7 +212,7 @@
 
   function validateField(name, touched) {
     var input = document.getElementById(name);
-    var result = FIELDS[name](input.value);
+    var result = ALL_FIELDS[name](input.value);
     showResult(name, result, touched);
     return result;
   }
@@ -212,10 +230,16 @@
   digitsOnly($("#netSalary"), 6);
   digitsOnly($("#cnp"), 13);
   digitsOnly($("#phone"), 10);
+  digitsOnly($("#gIdNumber"), 6);
+  digitsOnly($("#gNetSalary"), 6);
+  digitsOnly($("#gCnp"), 13);
+  digitsOnly($("#gPhone"), 10);
 
-  $("#idSeries").addEventListener("input", function () {
-    var v = this.value.replace(/[^A-Za-z]/g, "").toUpperCase().slice(0, 2);
-    if (v !== this.value) this.value = v;
+  [$("#idSeries"), $("#gIdSeries")].forEach(function (input) {
+    input.addEventListener("input", function () {
+      var v = this.value.replace(/[^A-Za-z]/g, "").toUpperCase().slice(0, 2);
+      if (v !== this.value) this.value = v;
+    });
   });
 
   $("#iban").addEventListener("input", function () {
@@ -225,14 +249,18 @@
     if (caretAtEnd) this.setSelectionRange(this.value.length, this.value.length);
   });
 
-  Object.keys(FIELDS).forEach(function (name) {
+  Object.keys(ALL_FIELDS).forEach(function (name) {
     var input = document.getElementById(name);
     if (!input) return;
-    input.addEventListener("input", function () { validateField(name, false); });
+    var event = input.tagName === "SELECT" ? "change" : "input";
+    input.addEventListener(event, function () { validateField(name, false); });
     input.addEventListener("blur", function () { validateField(name, true); });
   });
 
-  $("#netSalary").addEventListener("input", renderDebtRatio);
+  $("#netSalary").addEventListener("input", function () {
+    renderDebtRatio();
+    updateGuarantorState();
+  });
 
   /**
    * Arată ce parte din venitul net ia rata lunară.
@@ -276,6 +304,80 @@
       gdpr.checked ? "" : "Acordul este obligatoriu pentru depunerea cererii.";
   });
 
+  /* ============================================================
+     4. GIRANT
+     ============================================================ */
+  var gDetails = $("#guarantorDetails");
+  var autoOpened = false;
+
+  function guarantorActive() { return gDetails.open; }
+
+  /**
+   * Girantul e recomandat când rata depășește pragul de confort din venitul
+   * solicitantului — același prag care colorează avertismentul de mai sus.
+   * Recomandarea deschide secțiunea o singură dată; dacă utilizatorul o
+   * închide la loc, nu i-o mai redeschidem.
+   */
+  function updateGuarantorState() {
+    var salary = V.netSalary($("#netSalary").value);
+    var payment = LM.simulate(state.principal, state.months).monthlyPayment;
+    var recommended = salary.ok && !LM.isComfortable(payment, salary.value);
+
+    gDetails.classList.toggle("is-recommended", recommended);
+    $("#guarantorState").textContent = recommended
+      ? "Sistemul recomandă un girant pentru această cerere"
+      : salary.ok
+        ? "Opțional — rata ta se încadrează în venit"
+        : "Opțional — îl poți adăuga dacă vrei";
+
+    if (recommended && !autoOpened && !gDetails.open) {
+      gDetails.open = true;
+      autoOpened = true;
+    }
+    renderGuarantorRatio();
+  }
+
+  /* Ce parte din venitul girantului ar lua rata, dacă ar trebui să o acopere. */
+  function renderGuarantorRatio() {
+    var note = $("#gRatioNote");
+    var salary = V.netSalary($("#gNetSalary").value);
+    if (!guarantorActive() || !salary.ok) { note.hidden = true; return; }
+
+    var payment = LM.simulate(state.principal, state.months).monthlyPayment;
+    var ratio = LM.debtRatio(payment, salary.value);
+    var over = ratio > LM.COMFORT_RATIO * 100;
+
+    note.hidden = false;
+    note.classList.toggle("is-over", over);
+    note.textContent = over
+      ? "Rata ar lua " + ratio.toFixed(1).replace(".", ",") + "% din venitul girantului. " +
+        "Garanția rămâne valabilă, dar comisia C.A.R. va cântări și acest raport."
+      : "Rata ar lua " + ratio.toFixed(1).replace(".", ",") + "% din venitul girantului — " +
+        "o garanție solidă.";
+  }
+
+  $("#gNetSalary").addEventListener("input", renderGuarantorRatio);
+
+  gDetails.addEventListener("toggle", function () {
+    if (!gDetails.open) {
+      // Secțiunea închisă = cerere fără girant: curățăm stările, ca formularul
+      // să nu rămână cu erori dintr-o completare abandonată.
+      Object.keys(GUARANTOR_FIELDS).forEach(function (name) { clearFieldState(name); });
+      $("#gRatioNote").hidden = true;
+    } else {
+      autoOpened = true;
+      renderGuarantorRatio();
+    }
+  });
+
+  function clearFieldState(name) {
+    var input = document.getElementById(name);
+    if (!input) return;
+    fieldWrapper(input).classList.remove("is-valid", "is-invalid");
+    var msg = document.querySelector('[data-msg-for="' + name + '"]');
+    if (msg) msg.textContent = DEFAULT_HINTS[name] || "";
+  }
+
   /** Validează tot formularul; întoarce datele curate sau null. */
   function collectData() {
     var values = {};
@@ -290,6 +392,30 @@
         if (name === "iban") values.ibanFormatted = result.formatted;
       }
     });
+
+    if (guarantorActive()) {
+      var g = {};
+      Object.keys(GUARANTOR_FIELDS).forEach(function (name) {
+        var result = validateField(name, true);
+        if (!result.ok) {
+          if (!firstInvalid) firstInvalid = document.getElementById(name);
+        } else {
+          g[name.charAt(1).toLowerCase() + name.slice(2)] = result.value;
+        }
+      });
+
+      // Nimeni nu poate gira pentru sine.
+      if (g.cnp && g.cnp === values.cnp) {
+        var cnpInput = $("#gCnp");
+        fieldWrapper(cnpInput).classList.remove("is-valid");
+        fieldWrapper(cnpInput).classList.add("is-invalid");
+        $('[data-msg-for="gCnp"]').textContent =
+          "Girantul nu poate fi aceeași persoană cu solicitantul.";
+        if (!firstInvalid) firstInvalid = cnpInput;
+      } else {
+        values.guarantor = g;
+      }
+    }
 
     if (!gdpr.checked) {
       gdpr.closest(".consent").classList.add("is-invalid");
@@ -307,6 +433,10 @@
     values.loan = LM.simulate(state.principal, state.months);
     values.loan.netSalary = values.netSalary;
     values.loan.debtRatio = LM.debtRatio(values.loan.monthlyPayment, values.netSalary);
+    if (values.guarantor) {
+      values.guarantor.debtRatio =
+        LM.debtRatio(values.loan.monthlyPayment, values.guarantor.netSalary);
+    }
     values.gdpr = true;
     return values;
   }
@@ -440,14 +570,12 @@
   });
 
   function resetFieldStates() {
-    Object.keys(FIELDS).forEach(function (name) {
-      var input = document.getElementById(name);
-      if (!input) return;
-      fieldWrapper(input).classList.remove("is-valid", "is-invalid");
-      var msg = document.querySelector('[data-msg-for="' + name + '"]');
-      if (msg) msg.textContent = DEFAULT_HINTS[name] || "";
-    });
+    Object.keys(FIELDS).forEach(clearFieldState);
     gdpr.closest(".consent").classList.remove("is-invalid");
+    Object.keys(GUARANTOR_FIELDS).forEach(clearFieldState);
+    gDetails.open = false;
+    autoOpened = false;
+    $("#gRatioNote").hidden = true;
     setAmount(state.principal);
     renderDebtRatio();
   }
@@ -471,6 +599,7 @@
         netSalary: data.netSalary, gdpr: true
       },
       loan: data.loan,
+      guarantor: data.guarantor || null,
       regNo: pdf.regNo,
       fileName: pdf.fileName,
       pdfBase64: pdf.base64
@@ -500,6 +629,7 @@
   setAmount(state.principal);
   setMonths(state.months);
   renderDebtRatio();
+  updateGuarantorState();
 
   // Data minimă pentru expirarea buletinului: mâine
   var tomorrow = new Date();
