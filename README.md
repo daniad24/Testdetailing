@@ -125,7 +125,7 @@ detailing/                  fișierele care erau în depozit înainte de acest
 | E-mail | format valid |
 | Telefon | 10 cifre (acceptă și `+40…`, îl normalizează) |
 | Salariu net lunar | între 100 și 100.000 lei; acceptă `3500`, `3.500`, `3 500` |
-| Câmpurile girantului | aceleași reguli ca la solicitant, dar **doar când secțiunea e deschisă**; CNP-ul trebuie să difere de al solicitantului |
+| Câmpurile girantului | aceleași reguli ca la solicitant, inclusiv e-mail, dar **doar când secțiunea e deschisă**; CNP-ul trebuie să difere de al solicitantului |
 | Acord GDPR | obligatoriu |
 
 Câmpul devine verde la confirmare și roșu cu mesaj explicativ la eroare.
@@ -159,8 +159,10 @@ depășește pragul de confort din venitul solicitantului, adică același
 `COMFORT_RATIO`. Dacă utilizatorul o închide la loc, nu i se mai redeschide
 singură.
 
-Datele cerute: nume, CNP, serie și număr CI, adresă, telefon, calitatea față de
-solicitant (listă derulantă) și venitul net. Ultimul e folosit ca să arate ce
+Datele cerute: nume, CNP, serie și număr CI, adresă, telefon, **e-mail**,
+calitatea față de solicitant (listă derulantă) și venitul net. E-mailul e
+obligatoriu pentru că girantul semnează contractul electronic ca semnatar
+distinct, deci aplicația de semnare trebuie să îl poată contacta. Ultimul e folosit ca să arate ce
 parte din rată ar acoperi girantul, dacă ar ajunge să plătească el.
 
 Girantul nu poate avea același CNP ca solicitantul — nimeni nu girează pentru
@@ -181,8 +183,9 @@ Generat cu jsPDF, A4, cu:
   venit net declarat și rata raportată la el)
 - secțiunea C — declarații și consimțământ GDPR
 - secțiunea de girant și angajamentul lui de garanție, când cererea are girant
-- zonă de dată și semnături (a treia casetă apare doar cu girant) + casetă
-  rezervată aprobării CAR
+- o notă explicită că **documentul nu se semnează**: e fișa de date din care
+  societatea pregătește contractul, iar semnarea are loc ulterior, electronic
+- casetă rezervată aprobării CAR
 - diacritice românești corecte (font propriu decupat, inclus în `pdf-assets.js`)
 
 Numele fișierului: `Cerere_Sanitas_CAR_[Nume].pdf`
@@ -192,7 +195,21 @@ Layoutul curge pe câte pagini are nevoie: fiecare bloc verifică întâi dacă 
 („Pagina 1 din 2”) se aplică la final, când se știe totalul. O cerere fără girant
 rămâne pe o pagină; una cu girant ocupă două.
 
-### 6. Ce primește societatea
+### 6. Cele două atenționări
+
+**La început.** Când utilizatorul atinge primul câmp din actul de identitate, o
+fereastră îi spune ce să pregătească: cartea de identitate, IBAN-ul și fluturașul
+de salariu. Apare o singură dată pe sesiune, ca să nu devină obositoare.
+
+**Înainte de trimitere.** Butonul de trimitere nu mai trimite direct: deschide o
+recapitulare a datelor care ajung în contract — nume, CNP, CI, IBAN, e-mail,
+telefon, termenii împrumutului și girantul, dacă există. Utilizatorul confirmă cu
+*„Da, datele sunt corecte”* sau se întoarce cu *„Nu, mai verific o dată”*.
+
+E o recapitulare, nu un simplu „ești sigur?”: întrebarea abstractă primește
+întotdeauna „da”, pe când datele afișate alături de acte chiar se verifică.
+
+### 7. Ce primește societatea
 
 Pagina este **formularul din care se pregătește contractul**, nu contractul în
 sine. Documentul PDF generat este cererea semnată de solicitant; contractul
@@ -210,7 +227,11 @@ De aceea e-mailul administrativ conține trei lucruri:
 Cheile din JSON sunt în română și stabile (`solicitant.cnp`, `imprumut.rataLunara`,
 `girant.numeComplet`…), ca să poată fi legate direct la câmpurile din șablon.
 
-### 7. Fluxul de trimitere
+Fișierul conține și lista `semnatari`, cu rolul, numele, e-mailul și telefonul
+fiecăruia — exact ce cere aplicația de semnare electronică: **trei semnatari** la
+un contract cu girant (titular, girant, Sanitas CAR) și **doi** fără.
+
+### 8. Fluxul de trimitere
 
 1. Utilizatorul alege suma și perioada din simulator
 2. Completează formularul; CNP-ul și IBAN-ul se validează la tastare

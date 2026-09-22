@@ -87,6 +87,7 @@ function validatePayload(body) {
       idNumber: V.idNumber(g.idNumber),
       cnp: V.cnp(g.cnp),
       phone: V.phone(g.phone),
+      email: V.email(g.email),
       address: V.required(g.address, "adresa girantului", 8),
       relation: V.required(g.relation, "calitatea girantului", 3),
       netSalary: V.netSalary(g.netSalary)
@@ -188,6 +189,7 @@ function guarantorLines(d) {
     `  CI: seria ${g.idSeries}, nr. ${g.idNumber}`,
     `  Domiciliu: ${g.address}`,
     `  Telefon: ${g.phone}`,
+    `  E-mail: ${g.email}`,
     `  Calitatea față de solicitant: ${g.relation}`,
     `  Venit net declarat: ${money(g.netSalary)}`,
     `  Rata în venitul girantului: ${ratioText(g)}${over ? "  <-- peste o treime din venit" : ""}`,
@@ -405,11 +407,18 @@ function contractDataAttachment(parsed) {
       numarCI: g.idNumber,
       adresa: g.address,
       telefon: g.phone,
+      email: g.email,
       calitate: g.relation,
       venitNetLunar: g.netSalary,
       rataInVenitPct: g.debtRatio
     } : null,
-    acordGdpr: true
+    acordGdpr: true,
+    // Cine semnează contractul electronic, cu identificare video.
+    semnatari: [
+      { rol: "Titular", nume: a.fullName, email: a.email, telefon: a.phone },
+      ...(g ? [{ rol: "Girant", nume: g.fullName, email: g.email, telefon: g.phone }] : []),
+      { rol: "Sanitas CAR", nume: "Casa de Ajutor Reciproc Sanitas București", email: null, telefon: null }
+    ]
   };
 
   return {

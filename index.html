@@ -353,6 +353,15 @@
               </div>
 
               <div class="form-field span-2">
+                <label for="gEmail">Adresă de e-mail girant <span class="req">*</span></label>
+                <input type="email" id="gEmail" name="gEmail" placeholder="girant@exemplu.ro"
+                       autocomplete="off">
+                <p class="field-msg" data-msg-for="gEmail">
+                  Aici primește girantul contractul, ca să îl semneze electronic.
+                </p>
+              </div>
+
+              <div class="form-field span-2">
                 <label for="gAddress">Adresă de domiciliu <span class="req">*</span></label>
                 <input type="text" id="gAddress" name="gAddress"
                        placeholder="Ex: Str. Unirii nr. 14, Voluntari, jud. Ilfov">
@@ -430,6 +439,66 @@
     </p>
   </div>
 </footer>
+
+<!-- Atenționare la începutul completării: ce acte trebuie să aibă la îndemână -->
+<div class="modal" id="prepModal" hidden>
+  <div class="modal-backdrop" data-close-prep></div>
+  <div class="modal-panel modal-narrow" role="dialog" aria-modal="true" aria-labelledby="prepTitle">
+    <header class="modal-head">
+      <h3 id="prepTitle">Înainte de a completa</h3>
+      <button type="button" class="modal-close" data-close-prep aria-label="Închide">&times;</button>
+    </header>
+    <div class="modal-body">
+      <p class="modal-msg">
+        Datele de aici ajung direct în contractul tău. O literă greșită înseamnă
+        contract refăcut, așa că pregătește-ți întâi:
+      </p>
+      <ul class="prep-list">
+        <li>
+          <strong>Cartea de identitate</strong>
+          <span>Ține-o în față și copiază exact seria, numărul, CNP-ul și data expirării.</span>
+        </li>
+        <li>
+          <strong>Contul bancar (IBAN)</strong>
+          <span>Din aplicația băncii sau de pe card — acolo primești banii.</span>
+        </li>
+        <li>
+          <strong>Ultimul fluturaș de salariu</strong>
+          <span>Pentru venitul net lunar, exact cum îl încasezi.</span>
+        </li>
+      </ul>
+      <p class="modal-msg modal-msg-muted">
+        Dacă adaugi și un girant, ai nevoie de aceleași date pentru el, plus
+        adresa lui de e-mail.
+      </p>
+    </div>
+    <footer class="modal-foot">
+      <button type="button" class="btn btn-primary" data-close-prep>Am înțeles, continui</button>
+    </footer>
+  </div>
+</div>
+
+<!-- Confirmare înainte de trimitere: recapitulare, nu doar „ești sigur?” -->
+<div class="modal" id="confirmModal" hidden>
+  <div class="modal-backdrop" data-cancel-confirm></div>
+  <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="confirmTitle">
+    <header class="modal-head">
+      <h3 id="confirmTitle">Sunt datele corecte?</h3>
+      <button type="button" class="modal-close" data-cancel-confirm aria-label="Închide">&times;</button>
+    </header>
+    <div class="modal-body">
+      <p class="modal-msg">
+        Verifică datele de mai jos față de actele tale. Din ele se completează
+        contractul, iar o greșeală înseamnă contract refăcut.
+      </p>
+      <dl class="confirm-list" id="confirmList"></dl>
+    </div>
+    <footer class="modal-foot">
+      <button type="button" class="btn btn-primary" id="confirmYes">Da, datele sunt corecte</button>
+      <button type="button" class="btn btn-outline" data-cancel-confirm>Nu, mai verific o dată</button>
+    </footer>
+  </div>
+</div>
 
 <!-- Modal previzualizare PDF -->
 <div class="modal" id="pdfModal" hidden>

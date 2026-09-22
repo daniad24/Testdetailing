@@ -196,20 +196,6 @@
       });
     }
 
-    function signatureBox(x, boxY, w, h, label, value) {
-      doc.setDrawColor(LINE[0], LINE[1], LINE[2]);
-      doc.setLineWidth(0.25);
-      doc.roundedRect(x, boxY, w, h, 2, 2, "S");
-      setFont("bold", 7.8, MUTED);
-      doc.text(T(label), x + 4, boxY + 5.2);
-      if (value) {
-        setFont("bold", 10, INK);
-        doc.text(T(value), x + 4, boxY + 11.8);
-      }
-      doc.setDrawColor(180, 186, 196);
-      doc.line(x + 4, boxY + h - 6, x + w - 4, boxY + h - 6);
-    }
-
     /* ================= ANTETUL PRIMEI PAGINI ================= */
     var logo = global.SANITAS_ASSETS && global.SANITAS_ASSETS.logoPng;
     if (logo) {
@@ -299,6 +285,7 @@
         ["Carte de identitate", "Seria " + guarantor.idSeries + ", Nr. " + guarantor.idNumber],
         ["Adresă de domiciliu", guarantor.address],
         ["Telefon de contact", guarantor.phone],
+        ["Adresă de e-mail", guarantor.email],
         ["Calitatea față de solicitant", guarantor.relation]
       ];
       if (guarantor.netSalary) {
@@ -333,23 +320,27 @@
         "Regulamentul (UE) 2016/679 (GDPR)."
     ], 7.9, [60, 66, 78]);
 
-    /* ================= SEMNĂTURI ================= */
+    /* ================= CUM SE SEMNEAZĂ ================= */
+    /* Documentul nu se semnează: e fișa de date din care societatea
+       completează contractul-cadru. Semnarea are loc ulterior, electronic,
+       pe contract. Spunem asta explicit, ca nimeni să nu-l printeze degeaba. */
     y += 4.6;
-    var boxH = 19;
-    need(boxH + 19);
+    need(20);
 
-    var boxes = [
-      ["Data completării", formatDate(issuedAt)],
-      ["Semnătura solicitantului", ""]
-    ];
-    if (guarantor) boxes.push(["Semnătura girantului", ""]);
-
-    var gap = 6;
-    var boxW = (contentW - gap * (boxes.length - 1)) / boxes.length;
-    boxes.forEach(function (box, i) {
-      signatureBox(M + i * (boxW + gap), y, boxW, boxH, box[0], box[1]);
-    });
-    y += boxH + 5;
+    doc.setFillColor(SOFT[0], SOFT[1], SOFT[2]);
+    doc.setDrawColor(LINE[0], LINE[1], LINE[2]);
+    doc.setLineWidth(0.25);
+    doc.roundedRect(M, y, contentW, 16, 2, 2, "FD");
+    setFont("bold", 8, INK);
+    doc.text(T("ACEST DOCUMENT NU SE SEMNEAZĂ"), M + 4, y + 5.6);
+    setFont("normal", 7.8, MUTED);
+    var signNote = doc.splitTextToSize(T(
+      "Este fișa de date depusă online la " + formatDate(issuedAt) + ", din care Sanitas CAR " +
+      "pregătește contractul. Contractul se semnează electronic, cu semnătură calificată și " +
+      "identificare video, de către " + (guarantor ? "titular, girant și Sanitas CAR." : "titular și Sanitas CAR.")
+    ), contentW - 8);
+    doc.text(signNote, M + 4, y + 10.4);
+    y += 16 + 5;
 
     /* ---------- Zonă rezervată CAR ---------- */
     need(14);

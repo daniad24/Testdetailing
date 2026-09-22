@@ -497,7 +497,38 @@ input[type="range"]::-moz-range-thumb {
 .pdf-fallback-name { font-weight: 700; color: var(--ink); word-break: break-all; }
 .pdf-fallback-hint { color: var(--ink-3); font-size: .875rem; margin-top: 8px; }
 .modal-foot { display: flex; flex-wrap: wrap; gap: 12px; padding: 18px 24px; border-top: 1px solid var(--line); background: var(--bg-2); }
-.modal-foot .btn { flex: 1 1 200px; }
+.modal-foot .btn { flex: 1 1 200px; min-width: 0; white-space: normal; text-align: center; line-height: 1.3; }
+.modal-narrow { width: min(560px, 100%); }
+.modal-msg-muted { color: var(--ink-3); font-size: .875rem; }
+
+/* Lista de acte pregătitoare */
+.prep-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 14px; }
+.prep-list li {
+  display: flex; flex-direction: column; gap: 3px;
+  padding: 14px 16px; border-radius: 12px;
+  background: var(--bg-2); border: 1px solid var(--line);
+}
+.prep-list strong { color: var(--ink); font-size: .9375rem; }
+.prep-list span { color: var(--ink-3); font-size: .875rem; line-height: 1.55; }
+
+/* Recapitularea din confirmarea de trimitere */
+.confirm-list { margin: 0; display: flex; flex-direction: column; gap: 0; }
+.confirm-list > div {
+  display: flex; justify-content: space-between; align-items: baseline; gap: 16px;
+  padding: 10px 0; border-bottom: 1px solid var(--line);
+}
+.confirm-list > div:last-child { border-bottom: 0; }
+.confirm-list dt { color: var(--ink-3); font-size: .875rem; margin: 0; flex-shrink: 0; }
+.confirm-list dd {
+  margin: 0; font-weight: 600; color: var(--ink); text-align: right;
+  font-variant-numeric: tabular-nums; word-break: break-word;
+}
+.confirm-list .confirm-head {
+  border-bottom: 0; padding: 16px 0 6px;
+  font-size: .75rem; font-weight: 700; letter-spacing: .06em;
+  text-transform: uppercase; color: var(--red-dark);
+}
+.confirm-list .confirm-head:first-child { padding-top: 4px; }
 
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }

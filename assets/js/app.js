@@ -172,6 +172,7 @@
     gIdNumber: function (v) { return V.idNumber(v); },
     gCnp: function (v) { return V.cnp(v); },
     gPhone: function (v) { return V.phone(v); },
+    gEmail: function (v) { return V.email(v); },
     gAddress: function (v) { return V.required(v, "adresa girantului", 8); },
     gRelation: function (v) { return V.required(v, "calitatea față de solicitant", 3); },
     gNetSalary: function (v) { return V.netSalary(v); }
@@ -305,7 +306,38 @@
   });
 
   /* ============================================================
-     4. GIRANT
+     4. ATENȚIONAREA DE LA ÎNCEPUTUL COMPLETĂRII
+     ============================================================ */
+  var prepModal = $("#prepModal");
+  var prepShown = false;
+
+  function openPrep() {
+    if (prepShown) return;
+    prepShown = true;
+    prepModal.hidden = false;
+    document.body.style.overflow = "hidden";
+    var btn = prepModal.querySelector(".btn");
+    if (btn) btn.focus();
+  }
+
+  function closePrep() {
+    prepModal.hidden = true;
+    document.body.style.overflow = "";
+  }
+
+  /* Se deschide o singură dată, când utilizatorul atinge primul câmp din
+     actul de identitate — momentul în care chiar are nevoie de acte la îndemână. */
+  ["fullName", "idSeries", "idNumber", "idExpiry", "cnp"].forEach(function (name) {
+    var input = document.getElementById(name);
+    if (input) input.addEventListener("focus", openPrep, { once: true });
+  });
+
+  $$("[data-close-prep]").forEach(function (el) {
+    el.addEventListener("click", closePrep);
+  });
+
+  /* ============================================================
+     5. GIRANT
      ============================================================ */
   var gDetails = $("#guarantorDetails");
   var autoOpened = false;
@@ -442,7 +474,7 @@
   }
 
   /* ============================================================
-     4. GENERARE PDF + TRIMITERE
+     6. GENERARE PDF + TRIMITERE
      ============================================================ */
   var statusEl = $("#formStatus");
   var submitBtn = $("#submitBtn");
@@ -512,7 +544,10 @@
     el.addEventListener("click", closeModal);
   });
   document.addEventListener("keydown", function (e) {
-    if (e.key === "Escape" && !modal.hidden) closeModal();
+    if (e.key !== "Escape") return;
+    if (!modal.hidden) closeModal();
+    else if (!confirmModal.hidden) closeConfirm();
+    else if (!prepModal.hidden) closePrep();
   });
 
   /* --- doar previzualizare, fără trimitere --- */
@@ -528,12 +563,89 @@
     }
   });
 
+  /* --- confirmarea dinaintea trimiterii --- */
+  var confirmModal = $("#confirmModal");
+  var pendingData = null;
+
+  function openConfirm(data) {
+    pendingData = data;
+    $("#confirmList").innerHTML = "";
+    buildConfirmList(data).forEach(function (item) {
+      if (item.head) {
+        var head = document.createElement("dt");
+        head.className = "confirm-head";
+        head.textContent = item.head;
+        $("#confirmList").appendChild(head);
+        return;
+      }
+      var row = document.createElement("div");
+      var dt = document.createElement("dt");
+      dt.textContent = item.label;
+      var dd = document.createElement("dd");
+      dd.textContent = item.value;
+      row.appendChild(dt);
+      row.appendChild(dd);
+      $("#confirmList").appendChild(row);
+    });
+    confirmModal.hidden = false;
+    document.body.style.overflow = "hidden";
+    $("#confirmYes").focus();
+  }
+
+  function closeConfirm() {
+    confirmModal.hidden = true;
+    document.body.style.overflow = "";
+    pendingData = null;
+  }
+
+  /* Recapitulare pe care chiar o poate compara cu actele, nu doar „ești sigur?”. */
+  function buildConfirmList(data) {
+    var items = [
+      { head: "Datele tale" },
+      { label: "Nume și prenume", value: data.fullName },
+      { label: "CNP", value: data.cnp },
+      { label: "Carte de identitate", value: "Seria " + data.idSeries + ", nr. " + data.idNumber },
+      { label: "Cont bancar (IBAN)", value: data.ibanFormatted || data.iban },
+      { label: "E-mail", value: data.email },
+      { label: "Telefon", value: data.phone },
+      { head: "Împrumutul" },
+      { label: "Sumă", value: LM.whole(data.loan.principal) },
+      { label: "Perioadă", value: LM.monthsLabel(data.loan.months) },
+      { label: "Rată lunară", value: LM.money(data.loan.monthlyPayment) }
+    ];
+    if (data.guarantor) {
+      items.push({ head: "Girant" });
+      items.push({ label: "Nume și prenume", value: data.guarantor.fullName });
+      items.push({ label: "CNP", value: data.guarantor.cnp });
+      items.push({ label: "E-mail", value: data.guarantor.email });
+    }
+    return items;
+  }
+
+  $$("[data-cancel-confirm]").forEach(function (el) {
+    el.addEventListener("click", function () {
+      closeConfirm();
+      setStatus("Nicio problemă — verifică datele și trimite când ești gata.", "");
+      var firstField = $("#fullName");
+      firstField.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+  });
+
+  $("#confirmYes").addEventListener("click", function () {
+    var data = pendingData;
+    closeConfirm();
+    if (data) submitApplication(data);
+  });
+
   /* --- trimitere completă --- */
   $("#loanForm").addEventListener("submit", function (e) {
     e.preventDefault();
     var data = collectData();
     if (!data) { setStatus("Verifică câmpurile marcate în roșu.", "err"); return; }
+    openConfirm(data);
+  });
 
+  function submitApplication(data) {
     var pdf;
     try {
       pdf = generatePdf(data);
@@ -567,7 +679,7 @@
         setStatus("PDF generat, dar trimiterea pe e-mail a eșuat: " + err.message, "err");
       })
       .then(function () { submitBtn.disabled = false; });
-  });
+  }
 
   function resetFieldStates() {
     Object.keys(FIELDS).forEach(clearFieldState);
@@ -622,7 +734,7 @@
   }
 
   /* ============================================================
-     5. INIȚIALIZARE
+     7. INIȚIALIZARE
      ============================================================ */
   buildTable();
   placeTicks();
