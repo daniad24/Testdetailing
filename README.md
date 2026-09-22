@@ -192,7 +192,25 @@ Layoutul curge pe câte pagini are nevoie: fiecare bloc verifică întâi dacă 
 („Pagina 1 din 2”) se aplică la final, când se știe totalul. O cerere fără girant
 rămâne pe o pagină; una cu girant ocupă două.
 
-### 6. Fluxul de trimitere
+### 6. Ce primește societatea
+
+Pagina este **formularul din care se pregătește contractul**, nu contractul în
+sine. Documentul PDF generat este cererea semnată de solicitant; contractul
+propriu-zis se completează de societate, dintr-unul din cele două contracte-cadru.
+
+De aceea e-mailul administrativ conține trei lucruri:
+
+1. **Tipul de contract-cadru**, chiar în subiect: `[Cerere nouă · CU GIRANT]`
+   sau `[Cerere nouă · FĂRĂ GIRANT]` — se știe din subiect ce șablon se deschide.
+2. **Cererea în PDF**, ca document de referință.
+3. **`Date_Sanitas_CAR_[Nume].json`** — aceleași date, structurate, pentru
+   completarea automată a contractului. Retastarea unui CNP sau a unui IBAN este
+   exact locul în care apar greșelile care invalidează un contract.
+
+Cheile din JSON sunt în română și stabile (`solicitant.cnp`, `imprumut.rataLunara`,
+`girant.numeComplet`…), ca să poată fi legate direct la câmpurile din șablon.
+
+### 7. Fluxul de trimitere
 
 1. Utilizatorul alege suma și perioada din simulator
 2. Completează formularul; CNP-ul și IBAN-ul se validează la tastare

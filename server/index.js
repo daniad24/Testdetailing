@@ -250,12 +250,20 @@ function applicantMail(d) {
   };
 }
 
+/** Care dintre cele două contracte-cadru se aplică acestei cereri. */
+function contractType(d) {
+  return d.guarantor ? "CU GIRANT" : "FĂRĂ GIRANT";
+}
+
 function officeMail(d) {
   const { applicant: a, loan: l, regNo } = d;
   return {
-    subject: `[Cerere nouă] ${a.fullName} — ${money(l.principal)} / ${l.months} luni — ${regNo}`,
+    subject: `[Cerere nouă · ${contractType(d)}] ${a.fullName} — ${money(l.principal)} / ${l.months} luni — ${regNo}`,
     text: [
       `Cerere nouă depusă online.`,
+      ``,
+      `CONTRACT-CADRU DE FOLOSIT: ${contractType(d)}`,
+      `Datele pentru completare sunt atașate și în fișierul .json de mai jos.`,
       ``,
       `Nr. înregistrare: ${regNo}`,
       `Nume: ${a.fullName}`,
@@ -311,6 +319,8 @@ app.post("/api/cerere", async (req, res) => {
       await fs.mkdir(dir, { recursive: true });
       const stamp = new Date().toISOString().replace(/[:.]/g, "-");
       await fs.writeFile(path.join(dir, `${stamp}_${parsed.fileName}`), parsed.pdfBuffer);
+      const dataFile = contractDataAttachment(parsed);
+      await fs.writeFile(path.join(dir, `${stamp}_${dataFile.filename}`), dataFile.content);
       await fs.writeFile(
         path.join(dir, `${stamp}_${parsed.fileName}.json`),
         JSON.stringify({
@@ -341,7 +351,7 @@ app.post("/api/cerere", async (req, res) => {
         replyTo: parsed.applicant.email,
         subject: toOffice.subject,
         text: toOffice.text,
-        attachments: [attachment]
+        attachments: [attachment, contractDataAttachment(parsed)]
       });
     }
 
@@ -352,6 +362,62 @@ app.post("/api/cerere", async (req, res) => {
     res.status(502).json({ ok: false, error: "Cererea nu a putut fi trimisă pe e-mail. Încearcă din nou." });
   }
 });
+
+/**
+ * Datele cererii în format structurat, atașate e-mailului administrativ.
+ * Societatea completează contractul-cadru din ele, fără să retasteze nimic —
+ * retastarea unui CNP sau a unui IBAN e exact locul unde apar greșelile.
+ */
+function contractDataAttachment(parsed) {
+  const { applicant: a, loan: l, guarantor: g } = parsed;
+  const payload = {
+    numarInregistrare: parsed.regNo,
+    dataDepunerii: new Date().toISOString(),
+    contractCadru: contractType(parsed),
+    solicitant: {
+      numeComplet: a.fullName,
+      cnp: a.cnp,
+      serieCI: a.idSeries,
+      numarCI: a.idNumber,
+      valabilitateCI: a.idExpiry,
+      judet: a.county,
+      localitate: a.city,
+      strada: a.street,
+      numarStrada: a.streetNo,
+      telefon: a.phone,
+      email: a.email,
+      iban: a.iban,
+      venitNetLunar: a.netSalary
+    },
+    imprumut: {
+      suma: l.principal,
+      luni: l.months,
+      dobandaAnualaPct: l.annualRatePct,
+      rataLunara: l.monthlyPayment,
+      totalDeRambursat: l.totalRepayment,
+      costTotal: l.totalInterest,
+      rataInVenitPct: l.debtRatio
+    },
+    girant: g ? {
+      numeComplet: g.fullName,
+      cnp: g.cnp,
+      serieCI: g.idSeries,
+      numarCI: g.idNumber,
+      adresa: g.address,
+      telefon: g.phone,
+      calitate: g.relation,
+      venitNetLunar: g.netSalary,
+      rataInVenitPct: g.debtRatio
+    } : null,
+    acordGdpr: true
+  };
+
+  return {
+    filename: parsed.fileName.replace(/^Cerere_/, "Date_").replace(/\.pdf$/, ".json"),
+    content: Buffer.from(JSON.stringify(payload, null, 2), "utf8"),
+    contentType: "application/json; charset=utf-8"
+  };
+}
 
 app.get("/api/health", (_req, res) => {
   res.json({ ok: true, dryRun: DRY_RUN, smtpConfigured: Boolean(process.env.SMTP_HOST) });
