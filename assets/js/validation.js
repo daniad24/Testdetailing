@@ -167,13 +167,13 @@
   function netSalary(raw) {
     // Acceptăm „3500”, „3.500”, „3 500” și „3500,50”.
     var v = String(raw || "").trim().replace(/[\s.]/g, "").replace(",", ".");
-    if (!v) return { ok: false, msg: "Completează salariul net lunar." };
+    if (!v) return { ok: false, msg: "Completează salariul net de bază." };
     if (!/^\d+(\.\d{1,2})?$/.test(v)) {
       return { ok: false, msg: "Introdu doar cifre (ex: 3500)." };
     }
     var n = Number(v);
     if (!isFinite(n) || n < MIN_SALARY) {
-      return { ok: false, msg: "Suma pare prea mică. Introdu venitul net lunar, în lei." };
+      return { ok: false, msg: "Suma pare prea mică. Introdu salariul net de bază, în lei." };
     }
     if (n > MAX_SALARY) {
       return { ok: false, msg: "Suma pare prea mare. Verifică valoarea introdusă." };

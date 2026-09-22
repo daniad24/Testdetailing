@@ -271,13 +271,15 @@
           <legend><span class="legend-idx">D</span> Venit și termenii împrumutului</legend>
 
           <div class="form-field salary-field">
-            <label for="netSalary">Salariu net lunar <span class="req">*</span></label>
+            <label for="netSalary">Salariu net de bază <span class="req">*</span></label>
             <div class="input-with-suffix">
               <input type="text" id="netSalary" name="netSalary" placeholder="Ex: 3500"
                      inputmode="numeric" autocomplete="off" required>
               <span class="input-suffix">lei</span>
             </div>
-            <p class="field-msg" data-msg-for="netSalary">Venitul net pe care îl încasezi lunar.</p>
+            <p class="field-msg" data-msg-for="netSalary">
+              Suma lunară fixă, fără sporuri. Nu trebuie să fie exactă la leu.
+            </p>
           </div>
 
           <div class="summary-grid" id="formSummary">
@@ -287,7 +289,7 @@
             <div><span>Rată lunară</span><strong id="sumRate">266,55 lei</strong></div>
             <div><span>Total de rambursat</span><strong id="sumTotal">3.198,60 lei</strong></div>
             <div class="ratio-tile" id="ratioTile">
-              <span>Rata din venitul net</span>
+              <span>Rata din salariul net</span>
               <strong id="sumRatio">&mdash;</strong>
               <div class="ratio-bar"><i id="ratioFill"></i></div>
             </div>
@@ -383,13 +385,13 @@
               </div>
 
               <div class="form-field">
-                <label for="gNetSalary">Salariu net lunar girant <span class="req">*</span></label>
+                <label for="gNetSalary">Salariu net de bază girant <span class="req">*</span></label>
                 <div class="input-with-suffix">
                   <input type="text" id="gNetSalary" name="gNetSalary" placeholder="Ex: 4000"
                          inputmode="numeric" autocomplete="off">
                   <span class="input-suffix">lei</span>
                 </div>
-                <p class="field-msg" data-msg-for="gNetSalary">Venitul din care ar putea acoperi rata.</p>
+                <p class="field-msg" data-msg-for="gNetSalary">Suma fixă, fără sporuri.</p>
               </div>
             </div>
 
@@ -463,8 +465,8 @@
           <span>Din aplicația băncii sau de pe card — acolo primești banii.</span>
         </li>
         <li>
-          <strong>Ultimul fluturaș de salariu</strong>
-          <span>Pentru venitul net lunar, exact cum îl încasezi.</span>
+          <strong>Salariul net de bază</strong>
+          <span>Suma fixă din contract, fără sporuri și fără ore suplimentare.</span>
         </li>
       </ul>
       <p class="modal-msg modal-msg-muted">

@@ -264,7 +264,7 @@
   });
 
   /**
-   * Arată ce parte din venitul net ia rata lunară.
+   * Arată ce parte din salariul net de bază ia rata lunară.
    * Este o informație orientativă: nu blochează depunerea cererii, pentru că
    * decizia de acordare aparține comisiei C.A.R.
    */
@@ -292,9 +292,9 @@
     note.hidden = false;
     note.classList.toggle("is-over", over);
     note.textContent = over
-      ? "Rata depășește o treime din venitul tău net. Poți depune cererea, dar ia în calcul " +
+      ? "Rata depășește o treime din salariul tău net de bază. Poți depune cererea, dar ia în calcul " +
         "o sumă mai mică sau o perioadă mai lungă — comisia C.A.R. analizează și acest raport."
-      : "Rata se încadrează confortabil în venitul tău net, sub o treime din el.";
+      : "Rata se încadrează confortabil în salariul tău net de bază, sub o treime din el.";
   }
 
   var gdpr = $("#gdpr");

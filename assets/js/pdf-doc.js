@@ -113,17 +113,28 @@
     }
 
     /* Antet redus, pentru paginile 2 și următoarele. */
+    /* Antet redus, pentru paginile 2 și următoarele.
+       Logo-ul are raportul 478x522, deci înălțimea e lățimea x 1.092.
+       Linia trebuie să treacă sub el, nu prin el: la 9.5mm lățime, logo-ul
+       se termină la M + 8.4, iar linia stă la M + 11. */
+    var SLIM_LOGO_W = 9.5;
+    var SLIM_LOGO_H = SLIM_LOGO_W * 1.092;
+    var SLIM_RULE_Y = M + 11;
+
     function slimHeader() {
       var logo = global.SANITAS_ASSETS && global.SANITAS_ASSETS.logoPng;
-      if (logo) doc.addImage("data:image/png;base64," + logo, "PNG", M, M - 1, 10, 10.9);
+      if (logo) {
+        doc.addImage("data:image/png;base64," + logo, "PNG",
+          M, M - 2, SLIM_LOGO_W, SLIM_LOGO_H);
+      }
       setFont("bold", 9.5);
-      doc.text(T(ORG.name), M + 13, M + 5);
+      doc.text(T(ORG.name), M + SLIM_LOGO_W + 3.5, M + 4.5);
       setFont("normal", 7.6, MUTED);
-      doc.text(T("Cerere " + regNo), PAGE.w - M, M + 5, { align: "right" });
+      doc.text(T("Cerere " + regNo), PAGE.w - M, M + 4.5, { align: "right" });
       doc.setDrawColor(RED[0], RED[1], RED[2]);
       doc.setLineWidth(0.7);
-      doc.line(M, M + 8.6, PAGE.w - M, M + 8.6);
-      return M + 15;
+      doc.line(M, SLIM_RULE_Y, PAGE.w - M, SLIM_RULE_Y);
+      return SLIM_RULE_Y + 6;
     }
 
     /** Deschide o pagină nouă dacă blocul care urmează nu mai încape. */
@@ -269,7 +280,7 @@
       ["Total de rambursat", money(loan.totalRepayment)]
     ];
     if (loan.netSalary) {
-      termRows.push(["Venit net lunar declarat", money(loan.netSalary)]);
+      termRows.push(["Salariu net de bază declarat", money(loan.netSalary)]);
       if (loan.debtRatio != null) {
         termRows.push(["Rata în venitul net", fmt(loan.debtRatio, 1) + "%"]);
       }
@@ -292,7 +303,7 @@
         ["Calitatea față de solicitant", guarantor.relation]
       ];
       if (guarantor.netSalary) {
-        gRows.push(["Venit net lunar declarat", money(guarantor.netSalary)]);
+        gRows.push(["Salariu net de bază declarat", money(guarantor.netSalary)]);
         if (guarantor.debtRatio != null) {
           gRows.push(["Rata în venitul girantului", fmt(guarantor.debtRatio, 1) + "%"]);
         }
@@ -314,8 +325,8 @@
     doc.text(T(nextLetter() + ". DECLARAȚII ȘI CONSIMȚĂMÂNT"), M, y);
     y += 4.4;
     bullets([
-      "Declar pe propria răspundere că datele înscrise în prezenta cerere, inclusiv venitul " +
-        "net declarat, sunt complete și conforme cu realitatea și cu actul de identitate prezentat.",
+      "Declar pe propria răspundere că datele înscrise în prezenta cerere, inclusiv salariul " +
+        "net de bază declarat, sunt complete și conforme cu realitatea și cu actul de identitate prezentat.",
       "Mă oblig să restitui împrumutul acordat în ratele lunare stabilite, împreună cu dobânda " +
         "fixă de " + fmt(loan.annualRatePct, 0) + "% pe an, conform statutului C.A.R. Sanitas București.",
       "Îmi exprim consimțământul pentru prelucrarea datelor cu caracter personal cuprinse în " +

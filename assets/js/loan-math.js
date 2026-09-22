@@ -45,7 +45,7 @@
   }
 
   /**
-   * Ce parte din venitul net lunar ia rata, în procente.
+   * Ce parte din salariul net de bază ia rata, în procente.
    * Întoarce null când nu avem un venit valid, ca apelantul să nu afișeze nimic.
    */
   function debtRatio(monthlyPayment, netIncome) {

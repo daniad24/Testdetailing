@@ -130,7 +130,7 @@ detailing/                  fișierele care erau în depozit înainte de acest
 | IBAN | 24 de caractere, începe cu RO, **control mod-97**, afișat grupat `RO49 AAAA …` |
 | E-mail | format valid |
 | Telefon | 10 cifre (acceptă și `+40…`, îl normalizează) |
-| Salariu net lunar | între 100 și 100.000 lei; acceptă `3500`, `3.500`, `3 500` |
+| Salariu net de bază | între 100 și 100.000 lei; acceptă `3500`, `3.500`, `3 500` |
 | Câmpurile girantului | aceleași reguli ca la solicitant, inclusiv e-mail, dar **doar când secțiunea e deschisă**; CNP-ul trebuie să difere de al solicitantului |
 | Acord GDPR | obligatoriu |
 
@@ -140,8 +140,11 @@ utilizatorului, cele din `server/index.js` sunt cele care decid.
 
 ### 3. Venitul și gradul de îndatorare
 
-Solicitantul își trece salariul net lunar, iar pagina arată imediat ce parte din
-el ia rata: procentul, o bară colorată și un mesaj explicativ. Valoarea se
+Solicitantul își trece **salariul net de bază** — suma fixă din contract, fără
+sporuri. În sistemul sanitar sporurile diferă de la lună la lună, deci „cât
+încasezi” ar fi o întrebare fără un răspuns stabil; baza e o valoare pe care
+oricine o știe. Pagina arată imediat ce parte din ea ia rata: procentul, o bară
+colorată și un mesaj explicativ. Valoarea se
 actualizează și când se schimbă suma sau perioada din simulator.
 
 Pragul orientativ este **o treime din venitul net** (`COMFORT_RATIO` în
@@ -204,8 +207,8 @@ rămâne pe o pagină; una cu girant ocupă două.
 ### 6. Cele două atenționări
 
 **La început.** Când utilizatorul atinge primul câmp din actul de identitate, o
-fereastră îi spune ce să pregătească: cartea de identitate, IBAN-ul și fluturașul
-de salariu. Apare o singură dată pe sesiune, ca să nu devină obositoare.
+fereastră îi spune ce să pregătească: cartea de identitate, IBAN-ul și salariul
+net de bază. Apare o singură dată pe sesiune, ca să nu devină obositoare.
 
 **Înainte de trimitere.** Butonul de trimitere nu mai trimite direct: deschide o
 recapitulare a datelor care ajung în contract — nume, CNP, CI, IBAN, e-mail,

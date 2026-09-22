@@ -191,7 +191,7 @@ function guarantorLines(d) {
     `  Telefon: ${g.phone}`,
     `  E-mail: ${g.email}`,
     `  Calitatea față de solicitant: ${g.relation}`,
-    `  Venit net declarat: ${money(g.netSalary)}`,
+    `  Salariu net de bază: ${money(g.netSalary)}`,
     `  Rata în venitul girantului: ${ratioText(g)}${over ? "  <-- peste o treime din venit" : ""}`,
     ""
   ];
@@ -216,7 +216,7 @@ function applicantMail(d) {
       `  • Dobândă fixă: ${l.annualRatePct}% pe an`,
       `  • Rată lunară estimată: ${money(l.monthlyPayment)}`,
       `  • Total de rambursat: ${money(l.totalRepayment)}`,
-      `  • Venit net declarat: ${money(l.netSalary)}`,
+      `  • Salariu net de bază: ${money(l.netSalary)}`,
       `  • Rata în venitul net: ${ratioText(l)}`,
       `  • Cont pentru virament: ${a.iban}`,
       ``,
@@ -240,7 +240,7 @@ function applicantMail(d) {
           ${row("Dobândă fixă", `${l.annualRatePct}% pe an`)}
           ${row("Rată lunară estimată", `<strong style="color:#EA1B23">${money(l.monthlyPayment)}</strong>`)}
           ${row("Total de rambursat", money(l.totalRepayment))}
-          ${row("Venit net declarat", money(l.netSalary))}
+          ${row("Salariu net de bază", money(l.netSalary))}
           ${row("Rata în venitul net", escapeHtml(ratioText(l)))}
           ${row("Cont pentru virament", escapeHtml(a.iban))}
         </table>
@@ -282,7 +282,7 @@ function officeMail(d) {
       `Rată lunară: ${money(l.monthlyPayment)}`,
       `Total de rambursat: ${money(l.totalRepayment)}`,
       ``,
-      `Venit net declarat: ${money(l.netSalary)}`,
+      `Salariu net de bază: ${money(l.netSalary)}`,
       `Rata în venitul net: ${ratioText(l)}${l.debtRatio > LM.COMFORT_RATIO * 100 ? "  <-- peste o treime din venit" : ""}`,
       ``,
       ...guarantorLines(d),
@@ -389,7 +389,7 @@ function contractDataAttachment(parsed) {
       telefon: a.phone,
       email: a.email,
       iban: a.iban,
-      venitNetLunar: a.netSalary
+      salariuNetDeBaza: a.netSalary
     },
     imprumut: {
       suma: l.principal,
@@ -409,7 +409,7 @@ function contractDataAttachment(parsed) {
       telefon: g.phone,
       email: g.email,
       calitate: g.relation,
-      venitNetLunar: g.netSalary,
+      salariuNetDeBaza: g.netSalary,
       rataInVenitPct: g.debtRatio
     } : null,
     acordGdpr: true,
