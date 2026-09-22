@@ -37,6 +37,10 @@ cererile se salvează în `server/cereri/` (PDF + JSON) în loc să fie trimise.
 
 ### Link public, fără server (GitHub Pages)
 
+Depozitul conține un fișier `.nojekyll`. Fără el, GitHub Pages trece site-ul
+prin Jekyll, care aplică propriile reguli de excludere a fișierelor — un motiv
+obișnuit pentru care un fișier existent în depozit ajunge să dea 404 pe site.
+
 Pagina generează PDF-ul direct în browser, deci o găzduire statică e suficientă
 pentru tot, mai puțin trimiterea automată pe e-mail.
 
@@ -78,6 +82,8 @@ assets/
   js/pdf-assets.js          fontul cu diacritice + logo-ul, în base64
   js/app.js                 logica paginii (simulator, formular, trimitere)
   vendor/jspdf.umd.min.js   jsPDF servit local (fără dependență de CDN)
+.nojekyll                   oprește pipeline-ul Jekyll pe GitHub Pages, ca
+                            fișierele să fie servite exact cum sunt în depozit
   img/logo-sanitas.png      logo-ul Sanitas, folosit în pagină și în PDF
   fonts/                    fonturile decupate (sursa pentru pdf-assets.js)
 server/

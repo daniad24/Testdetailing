@@ -79,7 +79,10 @@
      ============================================================ */
   function build(data) {
     if (!global.jspdf || !global.jspdf.jsPDF) {
-      throw new Error("Biblioteca jsPDF nu a putut fi încărcată. Verifică conexiunea la internet.");
+      throw new Error(
+        "Generatorul de documente nu s-a încărcat. Reîncarcă pagina și încearcă din nou " +
+        "— datele completate se păstrează dacă nu închizi fila."
+      );
     }
     var doc = new global.jspdf.jsPDF({ unit: "mm", format: "a4", compress: true });
 
