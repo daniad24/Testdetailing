@@ -153,7 +153,10 @@
     idSeries: function (v) { return V.idSeries(v); },
     idNumber: function (v) { return V.idNumber(v); },
     idExpiry: function (v) { return V.idExpiry(v); },
+    idIssuedOn: function (v) { return V.idIssuedOn(v); },
+    idIssuedBy: function (v) { return V.required(v, "instituția care a eliberat actul", 3); },
     cnp: function (v) { return V.cnp(v); },
+    birthPlace: function (v) { return V.required(v, "locul nașterii"); },
     county: function (v) { return V.required(v, "județul"); },
     city: function (v) { return V.required(v, "localitatea"); },
     street: function (v) { return V.required(v, "strada"); },
@@ -161,6 +164,11 @@
     iban: function (v) { return V.iban(v); },
     email: function (v) { return V.email(v); },
     phone: function (v) { return V.phone(v); },
+    employer: function (v) { return V.required(v, "unitatea angajatoare", 3); },
+    employerAddress: function (v) { return V.required(v, "sediul unității", 5); },
+    jobTitle: function (v) { return V.required(v, "funcția"); },
+    department: function (v) { return V.optional(v); },
+    badgeNo: function (v) { return V.optional(v); },
     netSalary: function (v) { return V.netSalary(v); }
   };
 
@@ -170,10 +178,22 @@
     gFullName: function (v) { return V.fullName(v); },
     gIdSeries: function (v) { return V.idSeries(v); },
     gIdNumber: function (v) { return V.idNumber(v); },
+    gIdIssuedOn: function (v) { return V.idIssuedOn(v); },
+    gIdExpiry: function (v) { return V.idExpiry(v); },
+    gIdIssuedBy: function (v) { return V.required(v, "instituția care a eliberat actul", 3); },
     gCnp: function (v) { return V.cnp(v); },
+    gBirthPlace: function (v) { return V.required(v, "locul nașterii girantului"); },
+    gCounty: function (v) { return V.required(v, "județul girantului"); },
+    gCity: function (v) { return V.required(v, "localitatea girantului"); },
+    gStreet: function (v) { return V.required(v, "strada girantului"); },
+    gStreetNo: function (v) { return V.required(v, "numărul", 1); },
     gPhone: function (v) { return V.phone(v); },
     gEmail: function (v) { return V.email(v); },
-    gAddress: function (v) { return V.required(v, "adresa girantului", 8); },
+    gEmployer: function (v) { return V.required(v, "unitatea angajatoare a girantului", 3); },
+    gEmployerAddress: function (v) { return V.required(v, "sediul unității girantului", 5); },
+    gJobTitle: function (v) { return V.required(v, "funcția girantului"); },
+    gDepartment: function (v) { return V.optional(v); },
+    gBadgeNo: function (v) { return V.optional(v); },
     gRelation: function (v) { return V.required(v, "calitatea față de solicitant", 3); },
     gNetSalary: function (v) { return V.netSalary(v); }
   };
@@ -327,7 +347,8 @@
 
   /* Se deschide o singură dată, când utilizatorul atinge primul câmp din
      actul de identitate — momentul în care chiar are nevoie de acte la îndemână. */
-  ["fullName", "idSeries", "idNumber", "idExpiry", "cnp"].forEach(function (name) {
+  ["fullName", "idSeries", "idNumber", "idIssuedOn", "idExpiry", "idIssuedBy",
+   "cnp", "birthPlace"].forEach(function (name) {
     var input = document.getElementById(name);
     if (input) input.addEventListener("focus", openPrep, { once: true });
   });
@@ -410,6 +431,18 @@
     if (msg) msg.textContent = DEFAULT_HINTS[name] || "";
   }
 
+  /** Marchează vizual un câmp ca greșit și întoarce input-ul, pentru derulare. */
+  function markInvalid(id, msg) {
+    var input = document.getElementById(id);
+    if (!input) return null;
+    var wrap = fieldWrapper(input);
+    wrap.classList.remove("is-valid");
+    wrap.classList.add("is-invalid");
+    var msgEl = document.querySelector('[data-msg-for="' + id + '"]');
+    if (msgEl) msgEl.textContent = msg;
+    return input;
+  }
+
   /** Validează tot formularul; întoarce datele curate sau null. */
   function collectData() {
     var values = {};
@@ -438,11 +471,8 @@
 
       // Nimeni nu poate gira pentru sine.
       if (g.cnp && g.cnp === values.cnp) {
-        var cnpInput = $("#gCnp");
-        fieldWrapper(cnpInput).classList.remove("is-valid");
-        fieldWrapper(cnpInput).classList.add("is-invalid");
-        $('[data-msg-for="gCnp"]').textContent =
-          "Girantul nu poate fi aceeași persoană cu solicitantul.";
+        var cnpInput = markInvalid("gCnp",
+          "Girantul nu poate fi aceeași persoană cu solicitantul.");
         if (!firstInvalid) firstInvalid = cnpInput;
       } else {
         values.guarantor = g;
@@ -608,6 +638,7 @@
       { label: "Cont bancar (IBAN)", value: data.ibanFormatted || data.iban },
       { label: "E-mail", value: data.email },
       { label: "Telefon", value: data.phone },
+      { label: "Loc de muncă", value: data.employer },
       { head: "Împrumutul" },
       { label: "Sumă", value: LM.whole(data.loan.principal) },
       { label: "Perioadă", value: LM.monthsLabel(data.loan.months) },
@@ -702,14 +733,13 @@
     if (location.protocol === "file:") {
       return Promise.reject(noBackendError());
     }
+    /* Compunem solicitantul din chiar lista de câmpuri validate: dacă
+       formularul crește, plicul crește cu el, fără să uităm ceva pe drum. */
+    var applicant = { gdpr: true };
+    Object.keys(FIELDS).forEach(function (name) { applicant[name] = data[name]; });
+
     var payload = {
-      applicant: {
-        fullName: data.fullName, cnp: data.cnp,
-        idSeries: data.idSeries, idNumber: data.idNumber, idExpiry: data.idExpiry,
-        county: data.county, city: data.city, street: data.street, streetNo: data.streetNo,
-        iban: data.iban, email: data.email, phone: data.phone,
-        netSalary: data.netSalary, gdpr: true
-      },
+      applicant: applicant,
       loan: data.loan,
       guarantor: data.guarantor || null,
       regNo: pdf.regNo,

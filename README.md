@@ -78,6 +78,7 @@ assets/
   css/styles.css            stilurile paginii
   js/loan-math.js           calculul anuității (folosit și de server)
   js/validation.js          validări CNP, IBAN, CI, e-mail, telefon
+  js/numbers-ro.js          sumele scrise în litere (le cere contractul)
   js/pdf-doc.js             construcția documentului PDF oficial
   js/pdf-assets.js          fontul cu diacritice + logo-ul, în base64
   js/app.js                 logica paginii (simulator, formular, trimitere)
@@ -126,6 +127,10 @@ detailing/                  fișierele care erau în depozit înainte de acest
 | Serie buletin | 2 litere mari (se normalizează automat) |
 | Număr buletin | exact 6 cifre |
 | Expirare buletin | data trebuie să fie în viitor — actele expirate se resping |
+| Eliberare buletin | data trebuie să fie în trecut, după 1990 |
+| Eliberat de | text liber, minim 3 caractere (ex. `SPCLEP Sector 3`) |
+| Locul nașterii | text liber; **data** nașterii nu se cere, se scoate din CNP |
+| Unitate, sediu, funcție | obligatorii; secția și marca sunt opționale |
 | CNP | 13 cifre + **cifra de control** (cheia `279146358279`), data nașterii și codul de județ verificate |
 | IBAN | 24 de caractere, începe cu RO, **control mod-97**, afișat grupat `RO49 AAAA …` |
 | E-mail | format valid |
@@ -236,6 +241,13 @@ De aceea e-mailul administrativ conține trei lucruri:
 Cheile din JSON sunt în română și stabile (`solicitant.cnp`, `imprumut.rataLunara`,
 `girant.numeComplet`…), ca să poată fi legate direct la câmpurile din șablon.
 
+Structura urmează rubricile contractului-cadru și ale **Anexei 1 — angajament
+girant (fideiusor)**: identitate, locul nașterii, actul de identitate cu data și
+emitentul, domiciliul defalcat, unitatea / sediul / funcția / secția / marca,
+venitul și suma garantată. Sumele apar și scrise în litere
+(`sumaInLitere`, `salariuNetDeBazaInLitere`, `sumaGarantataInLitere`), pentru că
+formularul tipărit le cere în cuvinte, iar scrierea de mână e o sursă de erori.
+
 Fișierul conține și lista `semnatari`, cu rolul, numele, e-mailul și telefonul
 fiecăruia — exact ce cere aplicația de semnare electronică: **trei semnatari** la
 un contract cu girant (titular, girant, Sanitas CAR) și **doi** fără.
@@ -282,6 +294,7 @@ loc: `monthlyPayment()` din `assets/js/loan-math.js`.
 | Culoarea de brand, spațierile, fonturile | variabilele din `:root`, `assets/css/styles.css` |
 | Datele de contact din antetul PDF-ului | obiectul `ORG` din `assets/js/pdf-doc.js` |
 | Textele declarațiilor din PDF | secțiunea „DECLARAȚII” din `assets/js/pdf-doc.js` |
+| Regulile de acord pentru sumele în litere | `assets/js/numbers-ro.js` |
 | Conținutul e-mailurilor | `applicantMail()` / `officeMail()` din `server/index.js` |
 | Logo | înlocuiește `assets/img/logo-sanitas.png` și regenerează `pdf-assets.js` |
 

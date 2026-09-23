@@ -200,9 +200,22 @@
             </div>
 
             <div class="form-field">
+              <label for="idIssuedOn">Data eliberării <span class="req">*</span></label>
+              <input type="date" id="idIssuedOn" name="idIssuedOn" required>
+              <p class="field-msg" data-msg-for="idIssuedOn">Scrie pe buletin, la „eliberat la data de”.</p>
+            </div>
+
+            <div class="form-field">
               <label for="idExpiry">Data expirării buletinului <span class="req">*</span></label>
               <input type="date" id="idExpiry" name="idExpiry" required>
               <p class="field-msg" data-msg-for="idExpiry">Actele expirate nu sunt acceptate.</p>
+            </div>
+
+            <div class="form-field">
+              <label for="idIssuedBy">Eliberat de <span class="req">*</span></label>
+              <input type="text" id="idIssuedBy" name="idIssuedBy"
+                     placeholder="Ex: SPCLEP Sector 3" required>
+              <p class="field-msg" data-msg-for="idIssuedBy">Instituția trecută pe buletin.</p>
             </div>
 
             <div class="form-field">
@@ -210,6 +223,15 @@
               <input type="text" id="cnp" name="cnp" placeholder="13 cifre" maxlength="13"
                      inputmode="numeric" autocomplete="off" required>
               <p class="field-msg" data-msg-for="cnp">Exact 13 cifre, verificate matematic.</p>
+            </div>
+
+            <div class="form-field span-2">
+              <label for="birthPlace">Locul nașterii <span class="req">*</span></label>
+              <input type="text" id="birthPlace" name="birthPlace"
+                     placeholder="Ex: Craiova, jud. Dolj" required>
+              <p class="field-msg" data-msg-for="birthPlace">
+                Localitatea și județul. Data nașterii o luăm singuri din CNP.
+              </p>
             </div>
           </div>
         </fieldset>
@@ -241,9 +263,45 @@
           </div>
         </fieldset>
 
+        <!-- Loc de muncă: contractul C.A.R. identifică membrul prin unitate,
+             secție, funcție și marcă — sunt câmpuri tipărite în formular. -->
+        <fieldset class="form-block">
+          <legend><span class="legend-idx">C</span> Loc de muncă</legend>
+          <div class="grid-2">
+            <div class="form-field span-2">
+              <label for="employer">Unitatea angajatoare <span class="req">*</span></label>
+              <input type="text" id="employer" name="employer"
+                     placeholder="Ex: Spitalul Clinic de Urgență București" required>
+              <p class="field-msg" data-msg-for="employer">Denumirea completă, ca în contractul de muncă.</p>
+            </div>
+            <div class="form-field span-2">
+              <label for="employerAddress">Sediul unității <span class="req">*</span></label>
+              <input type="text" id="employerAddress" name="employerAddress"
+                     placeholder="Ex: Calea Floreasca nr. 8, București" required>
+              <p class="field-msg" data-msg-for="employerAddress">Strada și numărul.</p>
+            </div>
+            <div class="form-field">
+              <label for="jobTitle">Funcția <span class="req">*</span></label>
+              <input type="text" id="jobTitle" name="jobTitle"
+                     placeholder="Ex: asistent medical" required>
+              <p class="field-msg" data-msg-for="jobTitle"></p>
+            </div>
+            <div class="form-field">
+              <label for="department">Secția / compartimentul</label>
+              <input type="text" id="department" name="department" placeholder="Ex: Chirurgie I">
+              <p class="field-msg" data-msg-for="department">Opțional.</p>
+            </div>
+            <div class="form-field">
+              <label for="badgeNo">Marca</label>
+              <input type="text" id="badgeNo" name="badgeNo" placeholder="Ex: 10432" maxlength="20">
+              <p class="field-msg" data-msg-for="badgeNo">Opțional — numărul de personal din unitate.</p>
+            </div>
+          </div>
+        </fieldset>
+
         <!-- Contact & bancar -->
         <fieldset class="form-block">
-          <legend><span class="legend-idx">C</span> Contact și cont bancar</legend>
+          <legend><span class="legend-idx">D</span> Contact și cont bancar</legend>
           <div class="grid-2">
             <div class="form-field span-2">
               <label for="iban">Cont bancar (IBAN) <span class="req">*</span></label>
@@ -268,7 +326,7 @@
 
         <!-- Recapitulare -->
         <fieldset class="form-block">
-          <legend><span class="legend-idx">D</span> Venit și termenii împrumutului</legend>
+          <legend><span class="legend-idx">E</span> Venit și termenii împrumutului</legend>
 
           <div class="form-field salary-field">
             <label for="netSalary">Salariu net de bază <span class="req">*</span></label>
@@ -302,7 +360,7 @@
         <!-- Girantul e opțional: secțiunea deschisă înseamnă „depun cererea cu girant”. -->
         <details class="guarantor" id="guarantorDetails">
           <summary class="guarantor-summary">
-            <span class="legend-idx">E</span>
+            <span class="legend-idx">F</span>
             <span class="guarantor-head">
               <strong>Girant</strong>
               <span class="guarantor-state" id="guarantorState">
@@ -314,12 +372,15 @@
 
           <div class="guarantor-body">
             <p class="guarantor-intro" id="guarantorIntro">
-              Girantul răspunde pentru împrumut dacă titularul nu mai plătește, așa că are
-              nevoie de aceleași date de identificare. Dacă depui cererea fără girant,
-              închide secțiunea — câmpurile de aici nu vor fi trimise.
+              Girantul semnează „Angajamentul de fideiusor” din anexa contractului, deci
+              răspunde solidar pentru împrumut dacă titularul nu mai plătește. Anexa cere
+              aceleași date ca pentru titular. Dacă depui cererea fără girant, închide
+              secțiunea — câmpurile de aici nu vor fi trimise.
             </p>
 
             <div class="grid-2">
+              <p class="sub-head span-2">Identitate</p>
+
               <div class="form-field span-2">
                 <label for="gFullName">Nume și prenume girant <span class="req">*</span></label>
                 <input type="text" id="gFullName" name="gFullName" autocomplete="off"
@@ -341,10 +402,62 @@
               </div>
 
               <div class="form-field">
+                <label for="gIdIssuedOn">Data eliberării <span class="req">*</span></label>
+                <input type="date" id="gIdIssuedOn" name="gIdIssuedOn">
+                <p class="field-msg" data-msg-for="gIdIssuedOn">Scrie pe buletin, la „eliberat la data de”.</p>
+              </div>
+
+              <div class="form-field">
+                <label for="gIdExpiry">Data expirării <span class="req">*</span></label>
+                <input type="date" id="gIdExpiry" name="gIdExpiry">
+                <p class="field-msg" data-msg-for="gIdExpiry">Actul trebuie să fie valabil la semnare.</p>
+              </div>
+
+              <div class="form-field">
+                <label for="gIdIssuedBy">Eliberat de <span class="req">*</span></label>
+                <input type="text" id="gIdIssuedBy" name="gIdIssuedBy" placeholder="Ex: SPCLEP Sector 2">
+                <p class="field-msg" data-msg-for="gIdIssuedBy">Instituția trecută pe buletin.</p>
+              </div>
+
+              <div class="form-field">
                 <label for="gCnp">CNP girant <span class="req">*</span></label>
                 <input type="text" id="gCnp" name="gCnp" placeholder="13 cifre" maxlength="13"
                        inputmode="numeric" autocomplete="off">
                 <p class="field-msg" data-msg-for="gCnp">Exact 13 cifre, verificate matematic.</p>
+              </div>
+
+              <div class="form-field span-2">
+                <label for="gBirthPlace">Locul nașterii <span class="req">*</span></label>
+                <input type="text" id="gBirthPlace" name="gBirthPlace" placeholder="Ex: Buzău, jud. Buzău">
+                <p class="field-msg" data-msg-for="gBirthPlace">
+                  Localitatea și județul. Data nașterii o luăm din CNP.
+                </p>
+              </div>
+
+              <p class="sub-head span-2">Domiciliu și contact</p>
+
+              <div class="form-field">
+                <label for="gCounty">Județ <span class="req">*</span></label>
+                <input type="text" id="gCounty" name="gCounty" placeholder="Ex: Ilfov">
+                <p class="field-msg" data-msg-for="gCounty"></p>
+              </div>
+
+              <div class="form-field">
+                <label for="gCity">Localitate <span class="req">*</span></label>
+                <input type="text" id="gCity" name="gCity" placeholder="Ex: Voluntari">
+                <p class="field-msg" data-msg-for="gCity"></p>
+              </div>
+
+              <div class="form-field">
+                <label for="gStreet">Stradă <span class="req">*</span></label>
+                <input type="text" id="gStreet" name="gStreet" placeholder="Ex: Str. Unirii">
+                <p class="field-msg" data-msg-for="gStreet"></p>
+              </div>
+
+              <div class="form-field">
+                <label for="gStreetNo">Număr / bloc / sc. / ap. <span class="req">*</span></label>
+                <input type="text" id="gStreetNo" name="gStreetNo" placeholder="Ex: 14, bl. B3, sc. 1, ap. 5">
+                <p class="field-msg" data-msg-for="gStreetNo"></p>
               </div>
 
               <div class="form-field">
@@ -354,7 +467,7 @@
                 <p class="field-msg" data-msg-for="gPhone">10 cifre.</p>
               </div>
 
-              <div class="form-field span-2">
+              <div class="form-field">
                 <label for="gEmail">Adresă de e-mail girant <span class="req">*</span></label>
                 <input type="email" id="gEmail" name="gEmail" placeholder="girant@exemplu.ro"
                        autocomplete="off">
@@ -363,11 +476,38 @@
                 </p>
               </div>
 
+              <p class="sub-head span-2">Loc de muncă și venit</p>
+
               <div class="form-field span-2">
-                <label for="gAddress">Adresă de domiciliu <span class="req">*</span></label>
-                <input type="text" id="gAddress" name="gAddress"
-                       placeholder="Ex: Str. Unirii nr. 14, Voluntari, jud. Ilfov">
-                <p class="field-msg" data-msg-for="gAddress">Localitate, stradă și număr.</p>
+                <label for="gEmployer">Unitatea angajatoare <span class="req">*</span></label>
+                <input type="text" id="gEmployer" name="gEmployer"
+                       placeholder="Ex: Spitalul Clinic Colentina">
+                <p class="field-msg" data-msg-for="gEmployer">Denumirea completă.</p>
+              </div>
+
+              <div class="form-field span-2">
+                <label for="gEmployerAddress">Sediul unității <span class="req">*</span></label>
+                <input type="text" id="gEmployerAddress" name="gEmployerAddress"
+                       placeholder="Ex: Șos. Ștefan cel Mare nr. 19-21, București">
+                <p class="field-msg" data-msg-for="gEmployerAddress">Strada și numărul.</p>
+              </div>
+
+              <div class="form-field">
+                <label for="gJobTitle">Funcția <span class="req">*</span></label>
+                <input type="text" id="gJobTitle" name="gJobTitle" placeholder="Ex: asistent medical">
+                <p class="field-msg" data-msg-for="gJobTitle"></p>
+              </div>
+
+              <div class="form-field">
+                <label for="gDepartment">Secția / compartimentul</label>
+                <input type="text" id="gDepartment" name="gDepartment" placeholder="Ex: Cardiologie">
+                <p class="field-msg" data-msg-for="gDepartment">Opțional.</p>
+              </div>
+
+              <div class="form-field">
+                <label for="gBadgeNo">Marca</label>
+                <input type="text" id="gBadgeNo" name="gBadgeNo" placeholder="Ex: 20871" maxlength="20">
+                <p class="field-msg" data-msg-for="gBadgeNo">Opțional.</p>
               </div>
 
               <div class="form-field">
@@ -458,7 +598,14 @@
       <ul class="prep-list">
         <li>
           <strong>Cartea de identitate</strong>
-          <span>Ține-o în față și copiază exact seria, numărul, CNP-ul și data expirării.</span>
+          <span>
+            Ține-o în față: seria, numărul, CNP-ul, locul nașterii, cine a eliberat-o
+            și ambele date — când a fost eliberată și când expiră.
+          </span>
+        </li>
+        <li>
+          <strong>Datele de la locul de muncă</strong>
+          <span>Unitatea, secția, funcția și marca — cum apar în contractul de muncă.</span>
         </li>
         <li>
           <strong>Contul bancar (IBAN)</strong>
@@ -470,8 +617,8 @@
         </li>
       </ul>
       <p class="modal-msg modal-msg-muted">
-        Dacă adaugi și un girant, ai nevoie de aceleași date pentru el, plus
-        adresa lui de e-mail.
+        Dacă adaugi și un girant, el semnează angajamentul de fideiusor din anexa
+        contractului — deci are nevoie de exact aceleași date, plus adresa lui de e-mail.
       </p>
     </div>
     <footer class="modal-foot">
@@ -533,6 +680,7 @@
 <script src="assets/vendor/jspdf.umd.min.js"></script>
 <script src="assets/js/pdf-assets.js"></script>
 <script src="assets/js/loan-math.js"></script>
+<script src="assets/js/numbers-ro.js"></script>
 <script src="assets/js/validation.js"></script>
 <script src="assets/js/pdf-doc.js"></script>
 <script src="assets/js/app.js"></script>

@@ -198,6 +198,16 @@
       });
     }
 
+    /** Cât ar ocupa un bloc de bulinte, fără a-l desena. Îl folosim ca să
+        cerem spațiu pentru tot blocul deodată, nu paragraf cu paragraf —
+        altfel ultima declarație rămâne singură pe pagina următoare. */
+    function bulletsHeight(list, size) {
+      setFont("normal", size, INK);
+      return list.reduce(function (total, paragraph) {
+        return total + doc.splitTextToSize(T("• " + paragraph), contentW - 2).length * 3.5 + 1.4;
+      }, 0);
+    }
+
     /** Paragrafe cu bulină, folosite pentru declarații. */
     function bullets(list, size, color) {
       setFont("normal", size, color);
@@ -260,7 +270,9 @@
     dataTable([
       ["Nume și prenume", data.fullName],
       ["Cod Numeric Personal (CNP)", spaced(data.cnp)],
+      ["Data și locul nașterii", birthLine(data.cnp, data.birthPlace)],
       ["Carte de identitate", "Seria " + data.idSeries + ", Nr. " + data.idNumber],
+      ["Eliberată la data de / de către", issuedLine(data, "id")],
       ["Valabilitate act de identitate", formatDate(data.idExpiry)],
       ["Adresă de domiciliu", addressLine(data)],
       ["Telefon de contact", data.phone],
@@ -268,19 +280,31 @@
       ["Cont bancar (IBAN)", data.ibanFormatted || data.iban]
     ]);
 
+    /* ================= LOC DE MUNCĂ ================= */
+    y += 5.4;
+    need(12);
+    sectionTitle(nextLetter() + ". LOC DE MUNCĂ");
+    dataTable([
+      ["Unitatea angajatoare", data.employer],
+      ["Sediul unității", data.employerAddress],
+      ["Funcția", data.jobTitle],
+      ["Secția / compartimentul", data.department],
+      ["Marca", data.badgeNo]
+    ]);
+
     /* ================= TERMENII ÎMPRUMUTULUI ================= */
     y += 5.4;
     need(12);
     sectionTitle(nextLetter() + ". TERMENII ÎMPRUMUTULUI SOLICITAT");
     var termRows = [
-      ["Suma solicitată", money(loan.principal)],
+      ["Suma solicitată", moneyWords(loan.principal)],
       ["Perioada de rambursare", loan.months === 1 ? "1 lună" : loan.months + " luni"],
       ["Dobândă fixă aplicată", fmt(loan.annualRatePct, 0) + "% pe an"],
       ["Rata lunară estimată", money(loan.monthlyPayment)],
       ["Total de rambursat", money(loan.totalRepayment)]
     ];
     if (loan.netSalary) {
-      termRows.push(["Salariu net de bază declarat", money(loan.netSalary)]);
+      termRows.push(["Salariu net de bază declarat", moneyWords(loan.netSalary)]);
       if (loan.debtRatio != null) {
         termRows.push(["Rata în venitul net", fmt(loan.debtRatio, 1) + "%"]);
       }
@@ -293,38 +317,51 @@
       need(20);
       sectionTitle(nextLetter() + ". GIRANT");
 
+      /* Aceleași rubrici pe care le cere „Angajamentul de fideiusor” din
+         anexa contractului, în aceeași ordine, ca să se copieze direct. */
       var gRows = [
         ["Nume și prenume", guarantor.fullName],
         ["Cod Numeric Personal (CNP)", spaced(guarantor.cnp)],
+        ["Data și locul nașterii", birthLine(guarantor.cnp, guarantor.birthPlace)],
         ["Carte de identitate", "Seria " + guarantor.idSeries + ", Nr. " + guarantor.idNumber],
-        ["Adresă de domiciliu", guarantor.address],
+        ["Eliberată la data de / de către", issuedLine(guarantor, "id")],
+        ["Valabilitate act de identitate", formatDate(guarantor.idExpiry)],
+        ["Adresă de domiciliu", addressLine(guarantor)],
         ["Telefon de contact", guarantor.phone],
         ["Adresă de e-mail", guarantor.email],
+        ["Unitatea angajatoare", guarantor.employer],
+        ["Sediul unității", guarantor.employerAddress],
+        ["Funcția", guarantor.jobTitle],
+        ["Secția / compartimentul", guarantor.department],
+        ["Marca", guarantor.badgeNo],
         ["Calitatea față de solicitant", guarantor.relation]
       ];
       if (guarantor.netSalary) {
-        gRows.push(["Salariu net de bază declarat", money(guarantor.netSalary)]);
+        gRows.push(["Venit lunar net de bază", moneyWords(guarantor.netSalary)]);
         if (guarantor.debtRatio != null) {
           gRows.push(["Rata în venitul girantului", fmt(guarantor.debtRatio, 1) + "%"]);
         }
       }
-      dataTable(gRows);
+      gRows.push(["Sumă garantată solidar", moneyWords(loan.principal)]);
+      dataTable(gRows, { highlightRows: [gRows.length - 1] });
 
       y += 3.4;
-      bullets([
-        "Subsemnatul/Subsemnata, în calitate de girant, garantez pentru rambursarea " +
-          "împrumutului solicitat mai sus și mă oblig ca, în caz de neplată de către titular, " +
-          "să achit ratele rămase, în condițiile statutului C.A.R. Sanitas București."
-      ], 7.9, [60, 66, 78]);
+      var gDeclarations = [
+        "Subsemnatul/Subsemnata, în calitate de fideiusor solidar în condițiile art. 2300 " +
+          "Cod Civil, mă angajez față de Casa de Ajutor Reciproc Sanitas București să plătesc " +
+          "suma de " + moneyWords(loan.principal) + ", reprezentând împrumutul la care se adaugă " +
+          "dobânzile și eventualele penalități de întârziere, în cazul în care titularul nu " +
+          "achită împrumutul la termenele și în condițiile din contract.",
+        "Declar că înțeleg noțiunea de fideiusor solidar și efectele ei juridice: C.A.R. se " +
+          "poate îndrepta direct împotriva mea, fără să urmărească mai întâi bunurile " +
+          "titularului, și poate urmări oricare dintre fideiusori pentru întreaga sumă."
+      ];
+      need(bulletsHeight(gDeclarations, 7.9));
+      bullets(gDeclarations, 7.9, [60, 66, 78]);
     }
 
     /* ================= DECLARAȚII ================= */
-    y += 5.4;
-    need(14);
-    setFont("bold", 9.4);
-    doc.text(T(nextLetter() + ". DECLARAȚII ȘI CONSIMȚĂMÂNT"), M, y);
-    y += 4.4;
-    bullets([
+    var declarations = [
       "Declar pe propria răspundere că datele înscrise în prezenta cerere, inclusiv salariul " +
         "net de bază declarat, sunt complete și conforme cu realitatea și cu actul de identitate prezentat.",
       "Mă oblig să restitui împrumutul acordat în ratele lunare stabilite, împreună cu dobânda " +
@@ -332,7 +369,14 @@
       "Îmi exprim consimțământul pentru prelucrarea datelor cu caracter personal cuprinse în " +
         "prezenta cerere, în scopul analizării și administrării împrumutului, în conformitate cu " +
         "Regulamentul (UE) 2016/679 (GDPR)."
-    ], 7.9, [60, 66, 78]);
+    ];
+
+    y += 5.4;
+    need(4.4 + bulletsHeight(declarations, 7.9));
+    setFont("bold", 9.4);
+    doc.text(T(nextLetter() + ". DECLARAȚII ȘI CONSIMȚĂMÂNT"), M, y);
+    y += 4.4;
+    bullets(declarations, 7.9, [60, 66, 78]);
 
     /* ================= CUM SE SEMNEAZĂ ================= */
     /* Documentul nu se semnează: e fișa de date din care societatea
@@ -402,6 +446,28 @@
   function spaced(cnp) {
     var v = String(cnp || "");
     return v.length === 13 ? v.slice(0, 1) + " " + v.slice(1, 7) + " " + v.slice(7) : v;
+  }
+
+  /* Data nașterii nu se cere în formular: o scoatem din CNP, unde e deja
+     codificată. Rămâne de completat doar localitatea. */
+  function birthLine(cnpValue, place) {
+    var V = global.Validators;
+    var res = V && V.cnp ? V.cnp(cnpValue) : null;
+    var when = res && res.ok && res.birthDate ? V.formatDateRo(res.birthDate) : "";
+    return [when, place].filter(Boolean).join(", ") || "";
+  }
+
+  /* Contractul cere fiecare sumă și în litere. */
+  function moneyWords(value) {
+    var N = global.NumbersRo;
+    var words = N && N.lei ? N.lei(value) : "";
+    return words ? money(value) + " (" + words + ")" : money(value);
+  }
+
+  function issuedLine(d, prefix) {
+    var on = d[prefix + "IssuedOn"];
+    var by = d[prefix + "IssuedBy"];
+    return [on ? formatDate(on) : "", by].filter(Boolean).join(", ");
   }
 
   function addressLine(d) {

@@ -46,6 +46,26 @@
     return { ok: true, msg: "Act valabil până la " + formatDateRo(d) + ".", value: v };
   }
 
+  /* ---------------- Data eliberării actului ---------------- */
+  /* Buletinul a fost eliberat cândva în trecut; contractul cere data exactă,
+     scrisă pe act lângă „eliberat la”. */
+  function idIssuedOn(raw) {
+    var v = String(raw || "").trim();
+    if (!v) return { ok: false, msg: "Selectează data eliberării." };
+    var d = new Date(v + "T00:00:00");
+    if (isNaN(d.getTime())) return { ok: false, msg: "Dată invalidă." };
+    var today = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (d > today) return { ok: false, msg: "Data eliberării nu poate fi în viitor." };
+    if (d.getFullYear() < 1990) return { ok: false, msg: "Verifică anul eliberării." };
+    return { ok: true, msg: "", value: v };
+  }
+
+  /* ---------------- Câmp text facultativ ---------------- */
+  function optional(raw) {
+    return { ok: true, msg: "", value: String(raw || "").trim().replace(/\s+/g, " ") };
+  }
+
   /* ---------------- CNP: 13 cifre + cifră de control ---------------- */
   var CNP_KEY = "279146358279";
 
@@ -203,12 +223,14 @@
     idSeries: idSeries,
     idNumber: idNumber,
     idExpiry: idExpiry,
+    idIssuedOn: idIssuedOn,
     cnp: cnp,
     iban: iban,
     email: email,
     phone: phone,
     netSalary: netSalary,
     required: required,
+    optional: optional,
     groupIban: groupIban,
     formatDateRo: formatDateRo
   };

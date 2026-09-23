@@ -16,6 +16,7 @@ const nodemailer = require("nodemailer");
 
 const V = require("../assets/js/validation.js");
 const LM = require("../assets/js/loan-math.js");
+const N = require("../assets/js/numbers-ro.js");
 
 const ROOT = path.join(__dirname, "..");
 const PORT = Number(process.env.PORT) || 3000;
@@ -49,7 +50,10 @@ function validatePayload(body) {
     idSeries: V.idSeries(a.idSeries),
     idNumber: V.idNumber(a.idNumber),
     idExpiry: V.idExpiry(a.idExpiry),
+    idIssuedOn: V.idIssuedOn(a.idIssuedOn),
+    idIssuedBy: V.required(a.idIssuedBy, "instituția care a eliberat actul", 3),
     cnp: V.cnp(a.cnp),
+    birthPlace: V.required(a.birthPlace, "locul nașterii"),
     county: V.required(a.county, "județul"),
     city: V.required(a.city, "localitatea"),
     street: V.required(a.street, "strada"),
@@ -57,6 +61,11 @@ function validatePayload(body) {
     iban: V.iban(a.iban),
     email: V.email(a.email),
     phone: V.phone(a.phone),
+    employer: V.required(a.employer, "unitatea angajatoare", 3),
+    employerAddress: V.required(a.employerAddress, "sediul unității", 5),
+    jobTitle: V.required(a.jobTitle, "funcția"),
+    department: V.optional(a.department),
+    badgeNo: V.optional(a.badgeNo),
     netSalary: V.netSalary(a.netSalary)
   };
 
@@ -85,10 +94,22 @@ function validatePayload(body) {
       fullName: V.fullName(g.fullName),
       idSeries: V.idSeries(g.idSeries),
       idNumber: V.idNumber(g.idNumber),
+      idIssuedOn: V.idIssuedOn(g.idIssuedOn),
+      idExpiry: V.idExpiry(g.idExpiry),
+      idIssuedBy: V.required(g.idIssuedBy, "instituția care a eliberat actul", 3),
       cnp: V.cnp(g.cnp),
+      birthPlace: V.required(g.birthPlace, "locul nașterii girantului"),
+      county: V.required(g.county, "județul girantului"),
+      city: V.required(g.city, "localitatea girantului"),
+      street: V.required(g.street, "strada girantului"),
+      streetNo: V.required(g.streetNo, "numărul", 1),
       phone: V.phone(g.phone),
       email: V.email(g.email),
-      address: V.required(g.address, "adresa girantului", 8),
+      employer: V.required(g.employer, "unitatea angajatoare a girantului", 3),
+      employerAddress: V.required(g.employerAddress, "sediul unității girantului", 5),
+      jobTitle: V.required(g.jobTitle, "funcția girantului"),
+      department: V.optional(g.department),
+      badgeNo: V.optional(g.badgeNo),
       relation: V.required(g.relation, "calitatea girantului", 3),
       netSalary: V.netSalary(g.netSalary)
     };
@@ -183,15 +204,21 @@ function guarantorLines(d) {
   if (!g) return ["GIRANT: cererea este depusă fără girant.", ""];
   const over = g.debtRatio != null && g.debtRatio > LM.COMFORT_RATIO * 100;
   return [
-    "GIRANT",
+    "GIRANT (semnează Anexa 1 — angajament fideiusor)",
     `  Nume: ${g.fullName}`,
     `  CNP: ${g.cnp}`,
-    `  CI: seria ${g.idSeries}, nr. ${g.idNumber}`,
-    `  Domiciliu: ${g.address}`,
+    `  Născut: ${g.birthPlace}`,
+    `  CI: seria ${g.idSeries}, nr. ${g.idNumber}, eliberat ${g.idIssuedOn} de ${g.idIssuedBy}, valabil până la ${g.idExpiry}`,
+    `  Domiciliu: ${g.street} nr. ${g.streetNo}, ${g.city}, ${g.county}`,
     `  Telefon: ${g.phone}`,
     `  E-mail: ${g.email}`,
+    `  Unitatea: ${g.employer}`,
+    `  Sediul unității: ${g.employerAddress}`,
+    `  Funcția: ${g.jobTitle}`,
+    `  Secția: ${g.department || "—"}`,
+    `  Marca: ${g.badgeNo || "—"}`,
     `  Calitatea față de solicitant: ${g.relation}`,
-    `  Salariu net de bază: ${money(g.netSalary)}`,
+    `  Venit lunar net de bază: ${money(g.netSalary)} (${N.lei(g.netSalary)})`,
     `  Rata în venitul girantului: ${ratioText(g)}${over ? "  <-- peste o treime din venit" : ""}`,
     ""
   ];
@@ -270,19 +297,26 @@ function officeMail(d) {
       `Nr. înregistrare: ${regNo}`,
       `Nume: ${a.fullName}`,
       `CNP: ${a.cnp}`,
-      `CI: seria ${a.idSeries}, nr. ${a.idNumber}, valabil până la ${a.idExpiry}`,
+      `Născut: ${a.birthPlace}`,
+      `CI: seria ${a.idSeries}, nr. ${a.idNumber}, eliberat ${a.idIssuedOn} de ${a.idIssuedBy}, valabil până la ${a.idExpiry}`,
       `Domiciliu: ${a.street} nr. ${a.streetNo}, ${a.city}, ${a.county}`,
       `Telefon: ${a.phone}`,
       `E-mail: ${a.email}`,
       `IBAN: ${a.iban}`,
       ``,
-      `Sumă: ${money(l.principal)}`,
+      `Unitatea: ${a.employer}`,
+      `Sediul unității: ${a.employerAddress}`,
+      `Funcția: ${a.jobTitle}`,
+      `Secția: ${a.department || "—"}`,
+      `Marca: ${a.badgeNo || "—"}`,
+      ``,
+      `Sumă: ${money(l.principal)} (${N.lei(l.principal)})`,
       `Perioadă: ${l.months} luni`,
       `Dobândă: ${l.annualRatePct}% pe an`,
       `Rată lunară: ${money(l.monthlyPayment)}`,
       `Total de rambursat: ${money(l.totalRepayment)}`,
       ``,
-      `Salariu net de bază: ${money(l.netSalary)}`,
+      `Salariu net de bază: ${money(l.netSalary)} (${N.lei(l.netSalary)})`,
       `Rata în venitul net: ${ratioText(l)}${l.debtRatio > LM.COMFORT_RATIO * 100 ? "  <-- peste o treime din venit" : ""}`,
       ``,
       ...guarantorLines(d),
@@ -379,8 +413,11 @@ function contractDataAttachment(parsed) {
     solicitant: {
       numeComplet: a.fullName,
       cnp: a.cnp,
+      loculNasterii: a.birthPlace,
       serieCI: a.idSeries,
       numarCI: a.idNumber,
+      dataEliberariiCI: a.idIssuedOn,
+      eliberatDe: a.idIssuedBy,
       valabilitateCI: a.idExpiry,
       judet: a.county,
       localitate: a.city,
@@ -389,10 +426,17 @@ function contractDataAttachment(parsed) {
       telefon: a.phone,
       email: a.email,
       iban: a.iban,
-      salariuNetDeBaza: a.netSalary
+      unitatea: a.employer,
+      sediulUnitatii: a.employerAddress,
+      functia: a.jobTitle,
+      sectia: a.department || null,
+      marca: a.badgeNo || null,
+      salariuNetDeBaza: a.netSalary,
+      salariuNetDeBazaInLitere: N.lei(a.netSalary)
     },
     imprumut: {
       suma: l.principal,
+      sumaInLitere: N.lei(l.principal),
       luni: l.months,
       dobandaAnualaPct: l.annualRatePct,
       rataLunara: l.monthlyPayment,
@@ -403,14 +447,30 @@ function contractDataAttachment(parsed) {
     girant: g ? {
       numeComplet: g.fullName,
       cnp: g.cnp,
+      loculNasterii: g.birthPlace,
       serieCI: g.idSeries,
       numarCI: g.idNumber,
-      adresa: g.address,
+      dataEliberariiCI: g.idIssuedOn,
+      eliberatDe: g.idIssuedBy,
+      valabilitateCI: g.idExpiry,
+      judet: g.county,
+      localitate: g.city,
+      strada: g.street,
+      numarStrada: g.streetNo,
       telefon: g.phone,
       email: g.email,
+      unitatea: g.employer,
+      sediulUnitatii: g.employerAddress,
+      functia: g.jobTitle,
+      sectia: g.department || null,
+      marca: g.badgeNo || null,
       calitate: g.relation,
       salariuNetDeBaza: g.netSalary,
-      rataInVenitPct: g.debtRatio
+      salariuNetDeBazaInLitere: N.lei(g.netSalary),
+      rataInVenitPct: g.debtRatio,
+      // Anexa 1: fideiusorul garantează suma împrumutului, plus accesoriile.
+      sumaGarantata: l.principal,
+      sumaGarantataInLitere: N.lei(l.principal)
     } : null,
     acordGdpr: true,
     // Cine semnează contractul electronic, cu identificare video.
