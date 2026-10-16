@@ -32,17 +32,35 @@
     return { ok: true, msg: "Număr valid.", value: v };
   }
 
+  /* ---------------- Zile de calendar ----------------
+     Datele din formular sunt zile, nu momente. Le ținem la miezul nopții UTC,
+     la fel ca data de naștere scoasă din CNP și ca formatDateRo, care
+     formatează în UTC. Altfel, „2031-08-14” citit ca miezul nopții locale
+     devine 13.08 la afișare, în orice fus la est de Greenwich — adică la
+     toți utilizatorii din România. */
+  function parseDateUtc(raw) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(raw || "").trim());
+    if (!m) return null;
+    var d = new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3])));
+    return isNaN(d.getTime()) ? null : d;
+  }
+
+  function todayUtc() {
+    var n = new Date();
+    return new Date(Date.UTC(n.getFullYear(), n.getMonth(), n.getDate()));
+  }
+
   /* ---------------- Expirare buletin: nu poate fi în trecut ---------------- */
   function idExpiry(raw) {
     var v = String(raw || "").trim();
     if (!v) return { ok: false, msg: "Selectează data expirării." };
-    var d = new Date(v + "T00:00:00");
-    if (isNaN(d.getTime())) return { ok: false, msg: "Dată invalidă." };
-    var today = new Date();
-    today.setHours(0, 0, 0, 0);
+    var d = parseDateUtc(v);
+    if (!d) return { ok: false, msg: "Dată invalidă." };
+    var today = todayUtc();
     if (d < today) return { ok: false, msg: "Actul de identitate este expirat. Reînnoiește-l înainte de a depune cererea." };
-    var maxYear = today.getFullYear() + 30;
-    if (d.getFullYear() > maxYear) return { ok: false, msg: "Verifică anul expirării." };
+    if (d.getUTCFullYear() > today.getUTCFullYear() + 30) {
+      return { ok: false, msg: "Verifică anul expirării." };
+    }
     return { ok: true, msg: "Act valabil până la " + formatDateRo(d) + ".", value: v };
   }
 
@@ -52,12 +70,10 @@
   function idIssuedOn(raw) {
     var v = String(raw || "").trim();
     if (!v) return { ok: false, msg: "Selectează data eliberării." };
-    var d = new Date(v + "T00:00:00");
-    if (isNaN(d.getTime())) return { ok: false, msg: "Dată invalidă." };
-    var today = new Date();
-    today.setHours(0, 0, 0, 0);
-    if (d > today) return { ok: false, msg: "Data eliberării nu poate fi în viitor." };
-    if (d.getFullYear() < 1990) return { ok: false, msg: "Verifică anul eliberării." };
+    var d = parseDateUtc(v);
+    if (!d) return { ok: false, msg: "Dată invalidă." };
+    if (d > todayUtc()) return { ok: false, msg: "Data eliberării nu poate fi în viitor." };
+    if (d.getUTCFullYear() < 1990) return { ok: false, msg: "Verifică anul eliberării." };
     return { ok: true, msg: "", value: v };
   }
 
